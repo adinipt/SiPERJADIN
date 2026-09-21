@@ -1,0 +1,6728 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>SiPERJADIN — Sistem Perjalanan Dinas</title>
+
+  <meta name="description"
+        content="SiPERJADIN - Sistem Pengelolaan Perjalanan Dinas">
+
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <!-- SheetJS - Excel/CSV -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
+  </script>
+
+  <!-- QR Code -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js">
+  </script>
+
+  <style>
+    :root {
+      --cream: #EFECE3;
+      --blue-light: #8FABD4;
+      --blue: #4A70A9;
+      --black: #000000;
+      --white: #ffffff;
+
+      --bg: #f7f6f2;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+
+      --success: #238636;
+      --warning: #b7791f;
+      --danger: #c53030;
+
+      --shadow:
+        0 10px 30px rgba(0,0,0,.07);
+
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: "Inter", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* =========================
+       LAYOUT
+    ========================= */
+
+    .app {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 260px;
+      background: var(--black);
+      color: white;
+      padding: 24px 16px;
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      z-index: 1000;
+      overflow-y: auto;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 10px 28px;
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+      background: var(--blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 17px;
+    }
+
+    .brand-text h1 {
+      font-size: 18px;
+      line-height: 1.1;
+      font-weight: 800;
+    }
+
+    .brand-text span {
+      display: block;
+      margin-top: 4px;
+      font-size: 10px;
+      color: #aaa;
+      letter-spacing: .4px;
+    }
+
+    .nav-section {
+      margin-bottom: 24px;
+    }
+
+    .nav-title {
+      color: #777;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 0 12px 9px;
+    }
+
+    .nav-item {
+      width: 100%;
+      border: none;
+      background: transparent;
+      color: #c8c8c8;
+      padding: 12px;
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      text-align: left;
+      margin-bottom: 3px;
+      transition: .2s;
+    }
+
+    .nav-item:hover {
+      background: #171717;
+      color: white;
+    }
+
+    .nav-item.active {
+      background: var(--blue);
+      color: white;
+    }
+
+    .nav-icon {
+      width: 22px;
+      text-align: center;
+      font-size: 17px;
+    }
+
+    .main {
+      margin-left: 260px;
+      width: calc(100% - 260px);
+      min-height: 100vh;
+    }
+
+    .topbar {
+      height: 76px;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 30px;
+      position: sticky;
+      top: 0;
+      z-index: 900;
+    }
+
+    .page-title h2 {
+      font-size: 21px;
+      font-weight: 800;
+    }
+
+    .page-title p {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .mobile-menu {
+      display: none;
+      border: none;
+      background: transparent;
+      font-size: 23px;
+    }
+
+    .content {
+      padding: 28px;
+      max-width: 1700px;
+      margin: auto;
+    }
+
+    /* =========================
+       BUTTONS
+    ========================= */
+
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 15px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      transition: .2s;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: var(--blue);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #3f6091;
+    }
+
+    .btn-secondary {
+      background: var(--blue-light);
+      color: var(--black);
+    }
+
+    .btn-dark {
+      background: var(--black);
+      color: white;
+    }
+
+    .btn-light {
+      background: var(--cream);
+      color: var(--text);
+    }
+
+    .btn-danger {
+      background: #fee2e2;
+      color: var(--danger);
+    }
+
+    .btn-success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn-sm {
+      padding: 7px 10px;
+      font-size: 11px;
+      border-radius: 8px;
+    }
+
+    /* =========================
+       CARDS
+    ========================= */
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .card-header {
+      padding: 19px 21px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+    }
+
+    .card-header h3 {
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .card-body {
+      padding: 21px;
+    }
+
+    /* =========================
+       DASHBOARD
+    ========================= */
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::after {
+      content: "";
+      width: 90px;
+      height: 90px;
+      position: absolute;
+      right: -30px;
+      top: -30px;
+      background: var(--blue-light);
+      opacity: .25;
+      border-radius: 50%;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 30px;
+      font-weight: 800;
+      margin-top: 7px;
+    }
+
+    .stat-note {
+      margin-top: 5px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 20px;
+    }
+
+    /* =========================
+       TABLE
+    ========================= */
+
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+    }
+
+    th {
+      text-align: left;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--muted);
+      background: #fafafa;
+      padding: 11px 13px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 13px;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      vertical-align: middle;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* =========================
+       BADGES
+    ========================= */
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 9px;
+      border-radius: 99px;
+      font-size: 10px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .badge-draft {
+      background: #f3f4f6;
+      color: #4b5563;
+    }
+
+    .badge-upcoming {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .badge-running {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .badge-report {
+      background: #fce7f3;
+      color: #9d174d;
+    }
+
+    .badge-done {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    /* =========================
+       FORMS
+    ========================= */
+
+    .form-grid {
+      display: grid;
+      grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+      gap: 15px;
+    }
+
+    .form-grid-3 {
+      display: grid;
+      grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+      gap: 15px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group.full {
+      grid-column: 1 / -1;
+    }
+
+    .form-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #4b5563;
+    }
+
+    .required {
+      color: var(--danger);
+    }
+
+    .form-control {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: white;
+      border-radius: 10px;
+      padding: 11px 12px;
+      outline: none;
+      font-size: 12px;
+      color: var(--text);
+      transition: .2s;
+    }
+
+    .form-control:focus {
+      border-color: var(--blue);
+      box-shadow:
+        0 0 0 3px rgba(74,112,169,.12);
+    }
+
+    textarea.form-control {
+      resize: vertical;
+      min-height: 90px;
+    }
+
+    /* =========================
+       MODAL
+    ========================= */
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      width: min(850px, 100%);
+      max-height: 90vh;
+      overflow-y: auto;
+      border-radius: 18px;
+      box-shadow: 0 30px 80px rgba(0,0,0,.25);
+    }
+
+    .modal.large {
+      width: min(1100px, 100%);
+    }
+
+    .modal-header {
+      padding: 18px 21px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: white;
+      z-index: 2;
+    }
+
+    .modal-header h3 {
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 8px;
+      background: #f3f4f6;
+      font-size: 18px;
+    }
+
+    .modal-body {
+      padding: 21px;
+    }
+
+    .modal-footer {
+      padding: 16px 21px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    /* =========================
+       CALENDAR
+    ========================= */
+
+    .calendar-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .calendar-toolbar h3 {
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .calendar-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns:
+        repeat(7, minmax(0, 1fr));
+      border-top: 1px solid var(--border);
+      border-left: 1px solid var(--border);
+    }
+
+    .calendar-day-name {
+      background: #fafafa;
+      padding: 10px;
+      text-align: center;
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--muted);
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .calendar-cell {
+      min-height: 105px;
+      padding: 8px;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: white;
+    }
+
+    .calendar-cell.other-month {
+      background: #fafafa;
+      color: #aaa;
+    }
+
+    .calendar-number {
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .calendar-event {
+      background: var(--blue);
+      color: white;
+      border-radius: 5px;
+      padding: 4px 5px;
+      font-size: 8px;
+      line-height: 1.25;
+      margin-bottom: 3px;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    /* =========================
+       QUICK ACTION
+    ========================= */
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .quick-action {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: white;
+      padding: 14px;
+      text-align: left;
+      transition: .2s;
+    }
+
+    .quick-action:hover {
+      border-color: var(--blue-light);
+      transform: translateY(-2px);
+    }
+
+    .quick-action-icon {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    .quick-action-title {
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .quick-action-text {
+      color: var(--muted);
+      font-size: 10px;
+      margin-top: 4px;
+    }
+
+    /* =========================
+       PROGRESS
+    ========================= */
+
+    .progress {
+      height: 7px;
+      border-radius: 99px;
+      background: #edf0f4;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: var(--blue);
+      border-radius: inherit;
+    }
+
+    /* =========================
+       EMPTY STATE
+    ========================= */
+
+    .empty {
+      padding: 45px 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .empty-icon {
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
+
+    .empty h4 {
+      color: var(--text);
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+
+    .empty p {
+      font-size: 11px;
+    }
+
+    /* =========================
+       DOCUMENT PREVIEW
+    ========================= */
+
+    .document-preview {
+      background: #eee;
+      padding: 30px;
+    }
+
+    .paper {
+      background: white;
+      width: 210mm;
+      min-height: 297mm;
+      margin: auto;
+      padding: 22mm 20mm;
+      box-shadow: 0 10px 30px rgba(0,0,0,.15);
+      color: black;
+      font-family: "Times New Roman", serif;
+      font-size: 12pt;
+      line-height: 1.5;
+    }
+
+    .paper-header {
+      text-align: center;
+      border-bottom: 3px double black;
+      padding-bottom: 10px;
+      margin-bottom: 18px;
+    }
+
+    .paper-header .institution {
+      font-weight: bold;
+      font-size: 14pt;
+    }
+
+    .paper-header .office {
+      font-weight: bold;
+      font-size: 15pt;
+    }
+
+    .paper-header .address {
+      font-size: 9pt;
+    }
+
+    .paper-title {
+      text-align: center;
+      font-weight: bold;
+      text-decoration: underline;
+      margin: 20px 0 4px;
+    }
+
+    .paper-number {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .paper-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+    }
+
+    .paper-table td,
+    .paper-table th {
+      border: 1px solid black;
+      padding: 6px;
+      color: black;
+      background: white;
+      text-transform: none;
+      font-size: 11pt;
+    }
+
+    .paper-no-border td {
+      border: none;
+    }
+
+    .signature {
+      margin-left: auto;
+      width: 230px;
+      margin-top: 35px;
+      text-align: center;
+    }
+
+    /* =========================
+       TOAST
+    ========================= */
+
+    .toast-container {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 5000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      min-width: 260px;
+      max-width: 380px;
+      background: #111;
+      color: white;
+      border-radius: 10px;
+      padding: 12px 15px;
+      box-shadow: 0 15px 40px rgba(0,0,0,.2);
+      font-size: 12px;
+      animation: toastIn .25s ease;
+    }
+
+    .toast.success {
+      border-left: 4px solid #22c55e;
+    }
+
+    .toast.warning {
+      border-left: 4px solid #eab308;
+    }
+
+    .toast.error {
+      border-left: 4px solid #ef4444;
+    }
+
+    @keyframes toastIn {
+      from {
+        transform: translateY(15px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* =========================
+       RESPONSIVE
+    ========================= */
+
+    @media (max-width: 1100px) {
+      .stats-grid {
+        grid-template-columns:
+          repeat(2, minmax(0, 1fr));
+      }
+
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 800px) {
+      .sidebar {
+        transform: translateX(-100%);
+        transition: .25s;
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .main {
+        margin-left: 0;
+        width: 100%;
+      }
+
+      .mobile-menu {
+        display: block;
+      }
+
+      .topbar {
+        padding: 0 16px;
+      }
+
+      .content {
+        padding: 18px;
+      }
+
+      .form-grid,
+      .form-grid-3 {
+        grid-template-columns: 1fr;
+      }
+
+      .form-group.full {
+        grid-column: auto;
+      }
+
+      .calendar-cell {
+        min-height: 80px;
+      }
+
+      .calendar-event {
+        font-size: 7px;
+      }
+
+      .document-preview {
+        padding: 10px;
+      }
+
+      .paper {
+        width: 100%;
+        min-height: auto;
+        padding: 20px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar-actions .btn span {
+        display: none;
+      }
+
+      .quick-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .page-title h2 {
+        font-size: 17px;
+      }
+
+      .page-title p {
+        display: none;
+      }
+    }
+
+    /* =========================
+       PRINT
+    ========================= */
+
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+
+      .print-area,
+      .print-area * {
+        visibility: visible !important;
+      }
+
+      .print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+
+      .paper {
+        box-shadow: none;
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- =========================
+       SIDEBAR
+  ========================== -->
+
+  <aside class="sidebar" id="sidebar">
+
+    <div class="brand">
+      <div class="brand-icon">SP</div>
+
+      <div class="brand-text">
+        <h1>SiPERJADIN</h1>
+        <span>Sistem Perjalanan Dinas</span>
+      </div>
+    </div>
+
+    <div class="nav-section">
+
+      <div class="nav-title">
+        Utama
+      </div>
+
+      <button
+        class="nav-item active"
+        onclick="showPage('dashboard', this)">
+        <span class="nav-icon">⌂</span>
+        <span>Dashboard</span>
+      </button>
+
+      <button
+        class="nav-item"
+        onclick="showPage('perjalanan', this)">
+        <span class="nav-icon">✈</span>
+        <span>Perjalanan Dinas</span>
+      </button>
+
+      <button
+        class="nav-item"
+        onclick="showPage('kalender', this)">
+        <span class="nav-icon">▣</span>
+        <span>Kalender</span>
+      </button>
+
+      <button
+        class="nav-item"
+        onclick="showPage('monitoring', this)">
+        <span class="nav-icon">◉</span>
+        <span>Monitoring</span>
+      </button>
+
+    </div>
+
+    <div class="nav-section">
+
+      <div class="nav-title">
+        Data & Dokumen
+      </div>
+
+      <button
+        class="nav-item"
+        onclick="showPage('pegawai', this)">
+        <span class="nav-icon">♙</span>
+        <span>Data Pegawai</span>
+      </button>
+
+      <button
+        class="nav-item"
+        onclick="showPage('dokumen', this)">
+        <span class="nav-icon">▤</span>
+        <span>Dokumen</span>
+      </button>
+
+      <button
+        class="nav-item"
+        onclick="showPage('laporan', this)">
+        <span class="nav-icon">▥</span>
+        <span>Laporan</span>
+      </button>
+
+    </div>
+
+    <div class="nav-section">
+
+      <div class="nav-title">
+        Sistem
+      </div>
+
+      <button
+        class="nav-item"
+        onclick="showPage('pengaturan', this)">
+        <span class="nav-icon">⚙</span>
+        <span>Pengaturan</span>
+      </button>
+
+    </div>
+
+  </aside>
+
+
+  <!-- =========================
+       MAIN
+  ========================== -->
+
+  <main class="main">
+
+    <header class="topbar">
+
+      <div style="display:flex;align-items:center;gap:12px;">
+
+        <button
+          class="mobile-menu"
+          onclick="toggleSidebar()">
+          ☰
+        </button>
+
+        <div class="page-title">
+          <h2 id="pageTitle">
+            Dashboard
+          </h2>
+
+          <p id="pageSubtitle">
+            Ringkasan pengelolaan perjalanan dinas
+          </p>
+        </div>
+
+      </div>
+
+      <div class="topbar-actions">
+
+        <button
+          class="btn btn-light"
+          onclick="openModal('modalQuickTrip')">
+          ＋ <span>Perjalanan Baru</span>
+        </button>
+
+      </div>
+
+    </header>
+
+
+    <div class="content">
+
+      <!-- =====================
+           PAGE: DASHBOARD
+      ====================== -->
+
+      <section id="page-dashboard" class="page">
+
+        <div class="stats-grid">
+
+          <div class="card stat-card">
+            <div class="stat-label">
+              Total Perjalanan
+            </div>
+
+            <div class="stat-value" id="statTotal">
+              0
+            </div>
+
+            <div class="stat-note">
+              Seluruh data perjalanan
+            </div>
+          </div>
+
+
+          <div class="card stat-card">
+            <div class="stat-label">
+              Bulan Ini
+            </div>
+
+            <div class="stat-value" id="statMonth">
+              0
+            </div>
+
+            <div class="stat-note">
+              Perjalanan bulan berjalan
+            </div>
+          </div>
+
+
+          <div class="card stat-card">
+            <div class="stat-label">
+              Akan Berangkat
+            </div>
+
+            <div class="stat-value" id="statUpcoming">
+              0
+            </div>
+
+            <div class="stat-note">
+              Perjalanan terjadwal
+            </div>
+          </div>
+
+
+          <div class="card stat-card">
+            <div class="stat-label">
+              Perlu Tindakan
+            </div>
+
+            <div class="stat-value" id="statIncomplete">
+              0
+            </div>
+
+            <div class="stat-note">
+              Dokumen/laporan belum lengkap
+            </div>
+          </div>
+
+        </div>
+
+
+        <div class="dashboard-grid">
+
+          <!-- RECENT TRIPS -->
+
+          <div class="card">
+
+            <div class="card-header">
+
+              <h3>
+                Perjalanan Terbaru
+              </h3>
+
+              <button
+                class="btn btn-outline btn-sm"
+                onclick="showPageById('perjalanan')">
+                Lihat Semua
+              </button>
+
+            </div>
+
+            <div
+              class="table-wrapper"
+              id="recentTrips">
+            </div>
+
+          </div>
+
+
+          <!-- QUICK ACTION -->
+
+          <div class="card">
+
+            <div class="card-header">
+
+              <h3>
+                Aksi Cepat
+              </h3>
+
+            </div>
+
+            <div class="card-body">
+
+              <div class="quick-grid">
+
+                <button
+                  class="quick-action"
+                  onclick="openModal('modalQuickTrip')">
+
+                  <div class="quick-action-icon">
+                    📝
+                  </div>
+
+                  <div class="quick-action-title">
+                    Buat Perjalanan
+                  </div>
+
+                  <div class="quick-action-text">
+                    Buat surat tugas dan SPD
+                  </div>
+
+                </button>
+
+
+                <button
+                  class="quick-action"
+                  onclick="openModal('modalImport')">
+
+                  <div class="quick-action-icon">
+                    📊
+                  </div>
+
+                  <div class="quick-action-title">
+                    Import Pegawai
+                  </div>
+
+                  <div class="quick-action-text">
+                    Upload Excel / CSV
+                  </div>
+
+                </button>
+
+
+                <button
+                  class="quick-action"
+                  onclick="showPageById('kalender')">
+
+                  <div class="quick-action-icon">
+                    🗓️
+                  </div>
+
+                  <div class="quick-action-title">
+                    Kalender
+                  </div>
+
+                  <div class="quick-action-text">
+                    Lihat jadwal perjalanan
+                  </div>
+
+                </button>
+
+
+                <button
+                  class="quick-action"
+                  onclick="showPageById('monitoring')">
+
+                  <div class="quick-action-icon">
+                    📍
+                  </div>
+
+                  <div class="quick-action-title">
+                    Monitoring
+                  </div>
+
+                  <div class="quick-action-text">
+                    Pantau status perjalanan
+                  </div>
+
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div style="height:20px;"></div>
+
+
+        <!-- CALENDAR PREVIEW -->
+
+        <div class="card">
+
+          <div class="card-header">
+
+            <h3>
+              Kalender Perjalanan
+            </h3>
+
+            <button
+              class="btn btn-outline btn-sm"
+              onclick="showPageById('kalender')">
+              Buka Kalender
+            </button>
+
+          </div>
+
+          <div class="card-body">
+
+            <div
+              id="dashboardCalendar">
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =====================
+           PAGE: PERJALANAN
+      ====================== -->
+
+      <section
+        id="page-perjalanan"
+        class="page"
+        style="display:none;">
+
+        <div class="card">
+
+          <div class="card-header">
+
+            <div>
+              <h3>
+                Data Perjalanan Dinas
+              </h3>
+
+              <div
+                style="font-size:11px;color:var(--muted);margin-top:4px;">
+                Kelola Surat Tugas, SPD/SPPD dan perjalanan dinas.
+              </div>
+            </div>
+
+            <button
+              class="btn btn-primary"
+              onclick="openModal('modalQuickTrip')">
+              ＋ Perjalanan Baru
+            </button>
+
+          </div>
+
+
+          <div class="card-body">
+
+            <div
+              style="
+                display:flex;
+                gap:10px;
+                margin-bottom:15px;
+                flex-wrap:wrap;
+              ">
+
+              <input
+                id="searchTrip"
+                class="form-control"
+                style="max-width:300px;"
+                placeholder="Cari pegawai, tujuan, nomor..."
+                oninput="renderTrips()"
+              >
+
+              <select
+                id="filterStatus"
+                class="form-control"
+                style="max-width:180px;"
+                onchange="renderTrips()">
+
+                <option value="">
+                  Semua Status
+                </option>
+
+                <option value="Draft">
+                  Draft
+                </option>
+
+                <option value="Akan Berangkat">
+                  Akan Berangkat
+                </option>
+
+                <option value="Berjalan">
+                  Berjalan
+                </option>
+
+                <option value="Perlu Laporan">
+                  Perlu Laporan
+                </option>
+
+                <option value="Selesai">
+                  Selesai
+                </option>
+
+              </select>
+
+            </div>
+
+
+            <div
+              class="table-wrapper"
+              id="tripTable">
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =====================
+           PAGE: KALENDER
+      ====================== -->
+
+      <section
+        id="page-kalender"
+        class="page"
+        style="display:none;">
+
+        <div class="card">
+
+          <div class="card-body">
+
+            <div class="calendar-toolbar">
+
+              <div>
+
+                <button
+                  class="btn btn-outline btn-sm"
+                  onclick="calendarToday()">
+                  Hari Ini
+                </button>
+
+                <button
+                  class="btn btn-outline btn-sm"
+                  onclick="calendarPrev()">
+                  ‹
+                </button>
+
+                <button
+                  class="btn btn-outline btn-sm"
+                  onclick="calendarNext()">
+                  ›
+                </button>
+
+              </div>
+
+              <h3 id="calendarTitle">
+                -
+              </h3>
+
+              <div></div>
+
+            </div>
+
+            <div id="fullCalendar"></div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =====================
+           PAGE: MONITORING
+      ====================== -->
+
+      <section
+        id="page-monitoring"
+        class="page"
+        style="display:none;">
+
+        <div class="stats-grid">
+
+          <div class="card stat-card">
+            <div class="stat-label">
+              Draft
+            </div>
+            <div
+              class="stat-value"
+              id="monitorDraft">
+              0
+            </div>
+          </div>
+
+          <div class="card stat-card">
+            <div class="stat-label">
+              Berjalan
+            </div>
+            <div
+              class="stat-value"
+              id="monitorRunning">
+              0
+            </div>
+          </div>
+
+          <div class="card stat-card">
+            <div class="stat-label">
+              Perlu Laporan
+            </div>
+            <div
+              class="stat-value"
+              id="monitorReport">
+              0
+            </div>
+          </div>
+
+          <div class="card stat-card">
+            <div class="stat-label">
+              Selesai
+            </div>
+            <div
+              class="stat-value"
+              id="monitorDone">
+              0
+            </div>
+          </div>
+
+        </div>
+
+
+        <div class="card">
+
+          <div class="card-header">
+
+            <h3>
+              Monitoring Perjalanan
+            </h3>
+
+            <button
+              class="btn btn-secondary"
+              onclick="captureLocation()">
+              📍 Ambil Geotag
+            </button>
+
+          </div>
+
+          <div
+            class="table-wrapper"
+            id="monitorTable">
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =====================
+           PAGE: PEGAWAI
+      ====================== -->
+
+      <section
+        id="page-pegawai"
+        class="page"
+        style="display:none;">
+
+        <div class="card">
+
+          <div class="card-header">
+
+            <div>
+
+              <h3>
+                Data Pegawai
+              </h3>
+
+              <div
+                style="font-size:11px;color:var(--muted);margin-top:4px;">
+                Master pegawai digunakan untuk otomatisasi penerima perjalanan.
+              </div>
+
+            </div>
+
+            <div
+              style="display:flex;gap:8px;">
+
+              <button
+                class="btn btn-secondary"
+                onclick="openModal('modalImport')">
+                📥 Import Excel/CSV
+              </button>
+
+              <button
+                class="btn btn-primary"
+                onclick="openModal('modalEmployee')">
+                ＋ Tambah Pegawai
+              </button>
+
+            </div>
+
+          </div>
+
+          <div class="card-body">
+
+            <div
+              class="table-wrapper"
+              id="employeeTable">
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =====================
+           PAGE: DOKUMEN
+      ====================== -->
+
+      <section
+        id="page-dokumen"
+        class="page"
+        style="display:none;">
+
+        <div class="card">
+
+          <div class="card-header">
+
+            <div>
+
+              <h3>
+                Generator Dokumen
+              </h3>
+
+              <div
+                style="font-size:11px;color:var(--muted);margin-top:4px;">
+                Generate Surat Tugas, SPD/SPPD, rincian biaya dan laporan perjalanan.
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="card-body">
+
+            <div
+              class="form-group"
+              style="max-width:500px;">
+
+              <label class="form-label">
+                Pilih Perjalanan
+              </label>
+
+              <select
+                id="documentTripSelect"
+                class="form-control"
+                onchange="loadDocumentTrip()">
+
+                <option value="">
+                  Pilih perjalanan...
+                </option>
+
+              </select>
+
+            </div>
+
+
+            <div
+              id="documentActions"
+              style="
+                display:none;
+                margin-top:20px;
+              ">
+
+              <div
+                class="quick-grid"
+                style="grid-template-columns:repeat(4,1fr);">
+
+                <button
+                  class="quick-action"
+                  onclick="previewDocument('surat_tugas')">
+
+                  <div class="quick-action-icon">
+                    📄
+                  </div>
+
+                  <div class="quick-action-title">
+                    Surat Tugas
+                  </div>
+
+                  <div class="quick-action-text">
+                    Preview & cetak
+                  </div>
+
+                </button>
+
+
+                <button
+                  class="quick-action"
+                  onclick="previewDocument('spd')">
+
+                  <div class="quick-action-icon">
+                    📑
+                  </div>
+
+                  <div class="quick-action-title">
+                    SPD / SPPD
+                  </div>
+
+                  <div class="quick-action-text">
+                    Preview & cetak
+                  </div>
+
+                </button>
+
+
+                <button
+                  class="quick-action"
+                  onclick="previewDocument('rincian')">
+
+                  <div class="quick-action-icon">
+                    💰
+                  </div>
+
+                  <div class="quick-action-title">
+                    Rincian Biaya
+                  </div>
+
+                  <div class="quick-action-text">
+                    Preview & cetak
+                  </div>
+
+                </button>
+
+
+                <button
+                  class="quick-action"
+                  onclick="previewDocument('laporan')">
+
+                  <div class="quick-action-icon">
+                    📝
+                  </div>
+
+                  <div class="quick-action-title">
+                    Laporan
+                  </div>
+
+                  <div class="quick-action-text">
+                    Preview & cetak
+                  </div>
+
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =====================
+           PAGE: LAPORAN
+      ====================== -->
+
+      <section
+        id="page-laporan"
+        class="page"
+        style="display:none;">
+
+        <div class="card">
+
+          <div class="card-header">
+
+            <div>
+
+              <h3>
+                Laporan & Rekapitulasi
+              </h3>
+
+              <div
+                style="font-size:11px;color:var(--muted);margin-top:4px;">
+                Rekap data perjalanan dinas yang tersimpan di perangkat.
+              </div>
+
+            </div>
+
+            <button
+              class="btn btn-primary"
+              onclick="exportTripsCSV()">
+              📥 Export CSV
+            </button>
+
+          </div>
+
+          <div class="card-body">
+
+            <div
+              class="stats-grid"
+              style="margin-bottom:0;">
+
+              <div class="card stat-card">
+                <div class="stat-label">
+                  Total
+                </div>
+                <div
+                  class="stat-value"
+                  id="reportTotal">
+                  0
+                </div>
+              </div>
+
+              <div class="card stat-card">
+                <div class="stat-label">
+                  Selesai
+                </div>
+                <div
+                  class="stat-value"
+                  id="reportDone">
+                  0
+                </div>
+              </div>
+
+              <div class="card stat-card">
+                <div class="stat-label">
+                  Belum Laporan
+                </div>
+                <div
+                  class="stat-value"
+                  id="reportNeed">
+                  0
+                </div>
+              </div>
+
+              <div class="card stat-card">
+                <div class="stat-label">
+                  Tingkat Kelengkapan
+                </div>
+                <div
+                  class="stat-value"
+                  id="reportComplete">
+                  0%
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =====================
+           PAGE: PENGATURAN
+      ====================== -->
+
+      <section
+        id="page-pengaturan"
+        class="page"
+        style="display:none;">
+
+        <div class="card">
+
+          <div class="card-header">
+
+            <div>
+
+              <h3>
+                Pengaturan Sistem
+              </h3>
+
+              <div
+                style="font-size:11px;color:var(--muted);margin-top:4px;">
+                Identitas instansi dan dasar hukum.
+              </div>
+
+            </div>
+
+            <button
+              class="btn btn-primary"
+              onclick="saveSettings()">
+              Simpan
+            </button>
+
+          </div>
+
+          <div class="card-body">
+
+            <div class="form-grid">
+
+              <div class="form-group">
+
+                <label class="form-label">
+                  Nama Instansi
+                </label>
+
+                <input
+                  id="settingInstitution"
+                  class="form-control"
+                  value="PEMERINTAH KABUPATEN MALAKA">
+
+              </div>
+
+
+              <div class="form-group">
+
+                <label class="form-label">
+                  Perangkat Daerah
+                </label>
+
+                <input
+                  id="settingOffice"
+                  class="form-control"
+                  value="DINAS PERPUSTAKAAN DAN KEARSIPAN">
+
+              </div>
+
+
+              <div class="form-group full">
+
+                <label class="form-label">
+                  Alamat
+                </label>
+
+                <input
+                  id="settingAddress"
+                  class="form-control"
+                  value="Kabupaten Malaka, Nusa Tenggara Timur">
+
+              </div>
+
+
+              <div class="form-group full">
+
+                <label class="form-label">
+                  Dasar Hukum
+                </label>
+
+                <textarea
+                  id="settingLegal"
+                  class="form-control"
+                  rows="5">PMK Nomor 119 Tahun 2023 tentang Perubahan atas PMK Nomor 113/PMK.05/2012 tentang Perjalanan Dinas Dalam Negeri bagi Pejabat Negara, Pegawai Negeri, Pegawai Tidak Tetap, dan Pihak Lain.
+
+PMK Nomor 54 Tahun 2026 tentang Standar Biaya Masukan.
+
+Untuk perjalanan dinas yang dibebankan pada APBD, parameter biaya harus disesuaikan dengan ketentuan standar biaya dan regulasi Pemerintah Daerah yang berlaku.</textarea>
+
+              </div>
+
+            </div>
+
+
+            <div
+              style="
+                margin-top:20px;
+                padding:15px;
+                background:var(--cream);
+                border-radius:12px;
+                font-size:11px;
+                line-height:1.7;
+              ">
+
+              <strong>Catatan penggunaan:</strong><br>
+
+              Sistem ini merupakan aplikasi statis berbasis browser.
+              Data disimpan menggunakan localStorage pada perangkat/browser
+              pengguna. Untuk penggunaan resmi secara multi-user diperlukan
+              backend/database, autentikasi, hak akses, audit trail,
+              pencadangan data dan integrasi sesuai kebutuhan instansi.
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+
+  </main>
+
+</div>
+
+
+<!-- =====================================================
+     MODAL: PERJALANAN BARU
+====================================================== -->
+
+<div
+  class="modal-backdrop"
+  id="modalQuickTrip">
+
+  <div class="modal large">
+
+    <div class="modal-header">
+
+      <h3>
+        Buat Perjalanan Dinas
+      </h3>
+
+      <button
+        class="modal-close"
+        onclick="closeModal('modalQuickTrip')">
+        ×
+      </button>
+
+    </div>
+
+
+    <div class="modal-body">
+
+      <form id="tripForm">
+
+        <div class="form-grid">
+
+          <div class="form-group">
+
+            <label class="form-label">
+              Nomor Surat Tugas
+            </label>
+
+            <input
+              id="tripNumber"
+              class="form-control"
+              placeholder="Otomatis">
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label class="form-label">
+              PPK
+            </label>
+
+            <input
+              id="tripPPK"
+              class="form-control"
+              placeholder="Nama PPK">
+
+          </div>
+
+
+          <div class="form-group full">
+
+            <label class="form-label">
+              Pegawai / Pelaksana
+              <span class="required">*</span>
+            </label>
+
+            <select
+              id="tripEmployee"
+              class="form-control"
+              required>
+
+              <option value="">
+                Pilih pegawai...
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label class="form-label">
+              Pangkat / Golongan
+            </label>
+
+            <input
+              id="tripRank"
+              class="form-control"
+              placeholder="Otomatis dari data pegawai">
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label class="form-label">
+              Jabatan
+            </label>
+
+            <input
+              id="tripPosition"
+              class="form-control"
+              placeholder="Otomatis dari data pegawai">
+
+          </div>
+
+
+          <div class="form-group full">
+
+            <label class="form-label">
+              Pengikut / Peserta Lain
+            </label>
+
+            <select
+              id="tripFollowers"
+              class="form-control"
+              multiple
+              style="min-height:110px;">
+            </select>
+
+            <small
+              style="font-size:10px;color:var(--muted);">
+              Tekan Ctrl / Command untuk memilih lebih dari satu pegawai.
+            </small>
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label class="form-label">
+              Tempat Berangkat
+              <span class="required">*</span>
+            </label>
+
+            <input
+              id="tripOrigin"
+              class="form-control"
+              value="Malaka"
+              required>
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label class="form-label">
+              Tempat Tujuan
+              <span class="required">*</span>
+            </label>
+
+            <input
+              id="tripDestination"
+              class="form-control"
+              placeholder="Contoh: Kupang"
+              required>
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label class="form-label">
+              Tanggal Berangkat
+              <span class="required">*</span>
+            </label>
+
+            <input
+              type="date"
+              id="tripStart"
+              class="form-control"
+              required>
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label class="form-label">
+              Tanggal Kembali
+              <span class="required">*</span>
+            </label>
+
+            <input
+              type="date"
+              id="tripEnd"
+              class="form-control"
+              required>
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label class="form-label">
+              Lama Perjalanan
+            </label>
+
+            <input
+              id="tripDuration"
+              class="form-control"
+              readonly>
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label class="form-label">
+              Moda Transportasi
+            </label>
+
+            <select
+              id="tripTransport"
+              class="form-control">
+
+              <option value="Kendaraan Dinas">
+                Kendaraan Dinas
+              </option>
+
+              <option value="Kendaraan Umum">
+                Kendaraan Umum
+              </option>
+
+              <option value="Pesawat">
+                Pesawat
+              </option>
+
+              <option value="Kapal">
+                Kapal
+              </option>
+
+              <option value="Kereta Api">
+                Kereta Api
+              </option>
+
+              <option value="Lainnya">
+                Lainnya
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label class="form-label">
+              Sumber Anggaran
+            </label>
+
+            <input
+              id="tripBudget"
+              class="form-control"
+              placeholder="Contoh: APBD">
+
+          </div>
+
+
+          <div class="form-group full">
+
+            <label class="form-label">
+              Kegiatan / Maksud Perjalanan
+              <span class="required">*</span>
+            </label>
+
+            <textarea
+              id="tripActivity"
+              class="form-control"
+              placeholder="Jelaskan maksud dan tujuan perjalanan dinas..."
+              required></textarea>
+
+          </div>
+
+        </div>
+
+      </form>
+
+    </div>
+
+
+    <div class="modal-footer">
+
+      <button
+        class="btn btn-outline"
+        onclick="closeModal('modalQuickTrip')">
+        Batal
+      </button>
+
+      <button
+        class="btn btn-primary"
+        onclick="saveTrip()">
+        Simpan Perjalanan
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     MODAL: PEGAWAI
+====================================================== -->
+
+<div
+  class="modal-backdrop"
+  id="modalEmployee">
+
+  <div class="modal">
+
+    <div class="modal-header">
+
+      <h3>
+        Tambah Pegawai
+      </h3>
+
+      <button
+        class="modal-close"
+        onclick="closeModal('modalEmployee')">
+        ×
+      </button>
+
+    </div>
+
+
+    <div class="modal-body">
+
+      <div class="form-grid">
+
+        <div class="form-group">
+
+          <label class="form-label">
+            Nama Lengkap
+          </label>
+
+          <input
+            id="employeeName"
+            class="form-control"
+            placeholder="Nama lengkap">
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label class="form-label">
+            NIP
+          </label>
+
+          <input
+            id="employeeNip"
+            class="form-control"
+            placeholder="NIP">
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label class="form-label">
+            Pangkat / Golongan
+          </label>
+
+          <input
+            id="employeeRank"
+            class="form-control"
+            placeholder="Contoh: Penata / III/c">
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label class="form-label">
+            Jabatan
+          </label>
+
+          <input
+            id="employeePosition"
+            class="form-control"
+            placeholder="Jabatan">
+
+        </div>
+
+
+        <div class="form-group full">
+
+          <label class="form-label">
+            Unit Kerja
+          </label>
+
+          <input
+            id="employeeUnit"
+            class="form-control"
+            placeholder="Bidang / Seksi / Subbag">
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="modal-footer">
+
+      <button
+        class="btn btn-outline"
+        onclick="closeModal('modalEmployee')">
+        Batal
+      </button>
+
+      <button
+        class="btn btn-primary"
+        onclick="saveEmployee()">
+        Simpan
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     MODAL: IMPORT
+====================================================== -->
+
+<div
+  class="modal-backdrop"
+  id="modalImport">
+
+  <div class="modal">
+
+    <div class="modal-header">
+
+      <h3>
+        Import Data Pegawai
+      </h3>
+
+      <button
+        class="modal-close"
+        onclick="closeModal('modalImport')">
+        ×
+      </button>
+
+    </div>
+
+
+    <div class="modal-body">
+
+      <div
+        style="
+          background:var(--cream);
+          padding:15px;
+          border-radius:12px;
+          font-size:11px;
+          line-height:1.7;
+          margin-bottom:15px;
+        ">
+
+        File Excel/CSV sebaiknya memiliki kolom:
+
+        <strong>
+          Nama, NIP, Pangkat, Jabatan, Unit
+        </strong>
+
+        <br>
+
+        Sistem akan membaca data tersebut dan memasukkannya
+        ke master pegawai.
+
+      </div>
+
+
+      <input
+        type="file"
+        id="employeeFile"
+        class="form-control"
+        accept=".xlsx,.xls,.csv">
+
+    </div>
+
+
+    <div class="modal-footer">
+
+      <button
+        class="btn btn-outline"
+        onclick="closeModal('modalImport')">
+        Batal
+      </button>
+
+      <button
+        class="btn btn-primary"
+        onclick="importEmployees()">
+        Import
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     MODAL: DOCUMENT
+====================================================== -->
+
+<div
+  class="modal-backdrop"
+  id="modalDocument">
+
+  <div class="modal large">
+
+    <div class="modal-header">
+
+      <h3 id="documentModalTitle">
+        Dokumen
+      </h3>
+
+      <div
+        style="display:flex;gap:7px;">
+
+        <button
+          class="btn btn-dark btn-sm"
+          onclick="printDocument()">
+          🖨 Cetak / PDF
+        </button>
+
+        <button
+          class="modal-close"
+          onclick="closeModal('modalDocument')">
+          ×
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <div class="modal-body document-preview">
+
+      <div
+        id="documentPreview"
+        class="print-area">
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     TOAST
+====================================================== -->
+
+<div
+  class="toast-container"
+  id="toastContainer">
+</div>
+
+
+<script>
+/* =====================================================
+   SiPERJADIN V4
+   APPLICATION STATE
+===================================================== */
+
+const STORAGE_KEYS = {
+  employees: "siperjadin_employees_v4",
+  trips: "siperjadin_trips_v4",
+  settings: "siperjadin_settings_v4",
+  location: "siperjadin_location_v4"
+};
+
+
+/* =====================================================
+   DEFAULT DATA
+===================================================== */
+
+let employees =
+  JSON.parse(
+    localStorage.getItem(STORAGE_KEYS.employees)
+  ) || [];
+
+let trips =
+  JSON.parse(
+    localStorage.getItem(STORAGE_KEYS.trips)
+  ) || [];
+
+let settings =
+  JSON.parse(
+    localStorage.getItem(STORAGE_KEYS.settings)
+  ) || {
+
+    institution:
+      "PEMERINTAH KABUPATEN MALAKA",
+
+    office:
+      "DINAS PERPUSTAKAAN DAN KEARSIPAN",
+
+    address:
+      "Kabupaten Malaka, Nusa Tenggara Timur",
+
+    legal:
+      "PMK Nomor 119 Tahun 2023 tentang Perubahan atas PMK Nomor 113/PMK.05/2012 tentang Perjalanan Dinas Dalam Negeri bagi Pejabat Negara, Pegawai Negeri, Pegawai Tidak Tetap, dan Pihak Lain.\n\nPMK Nomor 54 Tahun 2026 tentang Standar Biaya Masukan.\n\nUntuk perjalanan dinas yang dibebankan pada APBD, parameter biaya harus disesuaikan dengan ketentuan standar biaya dan regulasi Pemerintah Daerah yang berlaku."
+
+  };
+
+
+let currentCalendarDate = new Date();
+
+let currentDocumentTrip = null;
+
+let currentDocumentType = null;
+
+
+/* =====================================================
+   SAVE STORAGE
+===================================================== */
+
+function saveStorage() {
+
+  localStorage.setItem(
+    STORAGE_KEYS.employees,
+    JSON.stringify(employees)
+  );
+
+  localStorage.setItem(
+    STORAGE_KEYS.trips,
+    JSON.stringify(trips)
+  );
+
+  localStorage.setItem(
+    STORAGE_KEYS.settings,
+    JSON.stringify(settings)
+  );
+}
+
+
+/* =====================================================
+   UTILITIES
+===================================================== */
+
+function escapeHtml(value) {
+
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
+function formatDate(dateString) {
+
+  if (!dateString) {
+    return "-";
+  }
+
+  const d = new Date(dateString + "T00:00:00");
+
+  if (isNaN(d)) {
+    return dateString;
+  }
+
+  return d.toLocaleDateString(
+    "id-ID",
+    {
+      day: "2-digit",
+      month: "long",
+      year: "numeric"
+    }
+  );
+}
+
+
+function shortDate(dateString) {
+
+  if (!dateString) {
+    return "-";
+  }
+
+  const d = new Date(dateString + "T00:00:00");
+
+  return d.toLocaleDateString(
+    "id-ID",
+    {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    }
+  );
+}
+
+
+function generateId(prefix = "ID") {
+
+  return (
+    prefix +
+    Date.now() +
+    Math.random()
+      .toString(36)
+      .substring(2, 7)
+  );
+}
+
+
+function showToast(
+  message,
+  type = "success"
+) {
+
+  const container =
+    document.getElementById(
+      "toastContainer"
+    );
+
+  const toast =
+    document.createElement("div");
+
+  toast.className =
+    `toast ${type}`;
+
+  toast.textContent =
+    message;
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 3500);
+}
+
+
+function openModal(id) {
+
+  const modal =
+    document.getElementById(id);
+
+  if (modal) {
+    modal.classList.add("show");
+  }
+}
+
+
+function closeModal(id) {
+
+  const modal =
+    document.getElementById(id);
+
+  if (modal) {
+    modal.classList.remove("show");
+  }
+}
+
+
+function toggleSidebar() {
+
+  document
+    .getElementById("sidebar")
+    .classList.toggle("open");
+}
+
+
+/* =====================================================
+   PAGE NAVIGATION
+===================================================== */
+
+const pageMeta = {
+
+  dashboard: {
+    title: "Dashboard",
+    subtitle:
+      "Ringkasan pengelolaan perjalanan dinas"
+  },
+
+  perjalanan: {
+    title: "Perjalanan Dinas",
+    subtitle:
+      "Kelola data dan dokumen perjalanan dinas"
+  },
+
+  kalender: {
+    title: "Kalender",
+    subtitle:
+      "Jadwal perjalanan dinas"
+  },
+
+  monitoring: {
+    title: "Monitoring",
+    subtitle:
+      "Pantau status dan kelengkapan perjalanan"
+  },
+
+  pegawai: {
+    title: "Data Pegawai",
+    subtitle:
+      "Master data pegawai"
+  },
+
+  dokumen: {
+    title: "Dokumen",
+    subtitle:
+      "Generator dokumen perjalanan dinas"
+  },
+
+  laporan: {
+    title: "Laporan",
+    subtitle:
+      "Rekapitulasi perjalanan dinas"
+  },
+
+  pengaturan: {
+    title: "Pengaturan",
+    subtitle:
+      "Konfigurasi sistem"
+  }
+
+};
+
+
+function showPage(
+  page,
+  element
+) {
+
+  document
+    .querySelectorAll(".page")
+    .forEach(p => {
+      p.style.display = "none";
+    });
+
+  const target =
+    document.getElementById(
+      "page-" + page
+    );
+
+  if (target) {
+    target.style.display = "block";
+  }
+
+  document
+    .querySelectorAll(".nav-item")
+    .forEach(item => {
+      item.classList.remove("active");
+    });
+
+  if (element) {
+    element.classList.add("active");
+  }
+
+  const meta =
+    pageMeta[page];
+
+  if (meta) {
+
+    document.getElementById(
+      "pageTitle"
+    ).textContent = meta.title;
+
+    document.getElementById(
+      "pageSubtitle"
+    ).textContent = meta.subtitle;
+
+  }
+
+  if (page === "dashboard") {
+    renderDashboard();
+  }
+
+  if (page === "perjalanan") {
+    renderTrips();
+  }
+
+  if (page === "kalender") {
+    renderFullCalendar();
+  }
+
+  if (page === "monitoring") {
+    renderMonitoring();
+  }
+
+  if (page === "pegawai") {
+    renderEmployees();
+  }
+
+  if (page === "dokumen") {
+    populateDocumentTrips();
+  }
+
+  if (page === "laporan") {
+    renderReports();
+  }
+
+  if (page === "pengaturan") {
+    loadSettings();
+  }
+
+  document
+    .getElementById("sidebar")
+    .classList.remove("open");
+}
+
+
+function showPageById(page) {
+
+  const button =
+    [...document.querySelectorAll(".nav-item")]
+      .find(btn =>
+        btn.getAttribute("onclick") &&
+        btn.getAttribute("onclick")
+          .includes(`'${page}'`)
+      );
+
+  showPage(page, button);
+}
+
+
+/* =====================================================
+   EMPLOYEE FUNCTIONS
+===================================================== */
+
+function renderEmployees() {
+
+  const container =
+    document.getElementById(
+      "employeeTable"
+    );
+
+  if (!employees.length) {
+
+    container.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">♙</div>
+        <h4>Belum ada data pegawai</h4>
+        <p>Tambahkan pegawai atau import dari Excel/CSV.</p>
+      </div>
+    `;
+
+    populateEmployeeSelects();
+
+    return;
+  }
+
+
+  let html = `
+    <table>
+
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Nama</th>
+          <th>NIP</th>
+          <th>Pangkat/Gol</th>
+          <th>Jabatan</th>
+          <th>Unit</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+
+      <tbody>
+  `;
+
+
+  employees.forEach(
+    (employee, index) => {
+
+      html += `
+        <tr>
+
+          <td>
+            ${index + 1}
+          </td>
+
+          <td>
+            <strong>
+              ${escapeHtml(employee.name)}
+            </strong>
+          </td>
+
+          <td>
+            ${escapeHtml(employee.nip || "-")}
+          </td>
+
+          <td>
+            ${escapeHtml(employee.rank || "-")}
+          </td>
+
+          <td>
+            ${escapeHtml(employee.position || "-")}
+          </td>
+
+          <td>
+            ${escapeHtml(employee.unit || "-")}
+          </td>
+
+          <td>
+
+            <button
+              class="btn btn-danger btn-sm"
+              onclick="deleteEmployee('${employee.id}')">
+              Hapus
+            </button>
+
+          </td>
+
+        </tr>
+      `;
+
+    }
+  );
+
+
+  html += `
+      </tbody>
+    </table>
+  `;
+
+  container.innerHTML = html;
+
+  populateEmployeeSelects();
+}
+
+
+function saveEmployee() {
+
+  const name =
+    document.getElementById(
+      "employeeName"
+    ).value.trim();
+
+  const nip =
+    document.getElementById(
+      "employeeNip"
+    ).value.trim();
+
+  const rank =
+    document.getElementById(
+      "employeeRank"
+    ).value.trim();
+
+  const position =
+    document.getElementById(
+      "employeePosition"
+    ).value.trim();
+
+  const unit =
+    document.getElementById(
+      "employeeUnit"
+    ).value.trim();
+
+
+  if (!name) {
+
+    showToast(
+      "Nama pegawai wajib diisi.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  employees.push({
+
+    id:
+      generateId("EMP"),
+
+    name,
+    nip,
+    rank,
+    position,
+    unit
+
+  });
+
+
+  saveStorage();
+
+  renderEmployees();
+
+  document
+    .getElementById("employeeName")
+    .value = "";
+
+  document
+    .getElementById("employeeNip")
+    .value = "";
+
+  document
+    .getElementById("employeeRank")
+    .value = "";
+
+  document
+    .getElementById("employeePosition")
+    .value = "";
+
+  document
+    .getElementById("employeeUnit")
+    .value = "";
+
+  closeModal("modalEmployee");
+
+  showToast(
+    "Data pegawai berhasil ditambahkan."
+  );
+}
+
+
+function deleteEmployee(id) {
+
+  const employee =
+    employees.find(
+      e => e.id === id
+    );
+
+  if (!employee) {
+    return;
+  }
+
+  if (
+    !confirm(
+      `Hapus data pegawai "${employee.name}"?`
+    )
+  ) {
+    return;
+  }
+
+  employees =
+    employees.filter(
+      e => e.id !== id
+    );
+
+  saveStorage();
+
+  renderEmployees();
+
+  showToast(
+    "Data pegawai berhasil dihapus."
+  );
+}
+
+
+/* =====================================================
+   EMPLOYEE SELECT
+===================================================== */
+
+function populateEmployeeSelects() {
+
+  const employeeSelect =
+    document.getElementById(
+      "tripEmployee"
+    );
+
+  const followerSelect =
+    document.getElementById(
+      "tripFollowers"
+    );
+
+
+  if (!employeeSelect) {
+    return;
+  }
+
+
+  employeeSelect.innerHTML = `
+    <option value="">
+      Pilih pegawai...
+    </option>
+  `;
+
+
+  employees.forEach(
+    employee => {
+
+      const option =
+        document.createElement("option");
+
+      option.value =
+        employee.id;
+
+      option.textContent =
+        `${employee.name}${employee.nip ? " — " + employee.nip : ""}`;
+
+      employeeSelect.appendChild(
+        option
+      );
+
+    }
+  );
+
+
+  if (followerSelect) {
+
+    followerSelect.innerHTML = "";
+
+    employees.forEach(
+      employee => {
+
+        const option =
+          document.createElement("option");
+
+        option.value =
+          employee.id;
+
+        option.textContent =
+          employee.name;
+
+        followerSelect.appendChild(
+          option
+        );
+
+      }
+    );
+
+  }
+
+}
+
+
+document.addEventListener(
+  "change",
+  function(event) {
+
+    if (
+      event.target.id ===
+      "tripEmployee"
+    ) {
+
+      const employee =
+        employees.find(
+          e =>
+            e.id ===
+            event.target.value
+        );
+
+      if (!employee) {
+        return;
+      }
+
+      document.getElementById(
+        "tripRank"
+      ).value =
+        employee.rank || "";
+
+      document.getElementById(
+        "tripPosition"
+      ).value =
+        employee.position || "";
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   IMPORT EXCEL / CSV
+===================================================== */
+
+function importEmployees() {
+
+  const input =
+    document.getElementById(
+      "employeeFile"
+    );
+
+  if (
+    !input.files ||
+    !input.files.length
+  ) {
+
+    showToast(
+      "Pilih file Excel atau CSV terlebih dahulu.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  const file =
+    input.files[0];
+
+  const reader =
+    new FileReader();
+
+
+  reader.onload =
+    function(event) {
+
+      try {
+
+        const data =
+          new Uint8Array(
+            event.target.result
+          );
+
+        const workbook =
+          XLSX.read(
+            data,
+            {
+              type: "array"
+            }
+          );
+
+        const sheet =
+          workbook.Sheets[
+            workbook.SheetNames[0]
+          ];
+
+        const rows =
+          XLSX.utils.sheet_to_json(
+            sheet,
+            {
+              defval: ""
+            }
+          );
+
+
+        let imported = 0;
+
+
+        rows.forEach(
+          row => {
+
+            const normalized = {};
+
+            Object.keys(row)
+              .forEach(key => {
+
+                normalized[
+                  key
+                    .toString()
+                    .trim()
+                    .toLowerCase()
+                ] =
+                  row[key];
+
+              });
+
+
+            const name =
+              normalized.nama ||
+              normalized.name ||
+              normalized["nama lengkap"] ||
+              "";
+
+            if (!name) {
+              return;
+            }
+
+
+            employees.push({
+
+              id:
+                generateId("EMP"),
+
+              name:
+                String(name),
+
+              nip:
+                String(
+                  normalized.nip || ""
+                ),
+
+              rank:
+                String(
+                  normalized.pangkat ||
+                  normalized.golongan ||
+                  normalized["pangkat/gol"] ||
+                  ""
+                ),
+
+              position:
+                String(
+                  normalized.jabatan ||
+                  normalized.position ||
+                  ""
+                ),
+
+              unit:
+                String(
+                  normalized.unit ||
+                  normalized["unit kerja"] ||
+                  ""
+                )
+
+            });
+
+            imported++;
+
+          }
+        );
+
+
+        saveStorage();
+
+        renderEmployees();
+
+        closeModal(
+          "modalImport"
+        );
+
+        input.value = "";
+
+        showToast(
+          `${imported} data pegawai berhasil diimport.`
+        );
+
+      }
+
+      catch(error) {
+
+        console.error(error);
+
+        showToast(
+          "File tidak dapat dibaca.",
+          "error"
+        );
+
+      }
+
+    };
+
+
+  reader.readAsArrayBuffer(
+    file
+  );
+
+}
+
+
+/* =====================================================
+   TRIP NUMBER
+===================================================== */
+
+function generateTripNumber() {
+
+  const year =
+    new Date()
+      .getFullYear();
+
+  const count =
+    trips.length + 1;
+
+  return `ST/${String(count).padStart(4, "0")}/${year}`;
+
+}
+
+
+/* =====================================================
+   DATE CALCULATION
+===================================================== */
+
+function calculateDuration() {
+
+  const start =
+    document.getElementById(
+      "tripStart"
+    ).value;
+
+  const end =
+    document.getElementById(
+      "tripEnd"
+    ).value;
+
+  const output =
+    document.getElementById(
+      "tripDuration"
+    );
+
+
+  if (!start || !end) {
+
+    output.value = "";
+
+    return;
+  }
+
+
+  const d1 =
+    new Date(
+      start + "T00:00:00"
+    );
+
+  const d2 =
+    new Date(
+      end + "T00:00:00"
+    );
+
+
+  const diff =
+    Math.round(
+      (
+        d2 - d1
+      ) /
+      (
+        1000 *
+        60 *
+        60 *
+        24
+      )
+    ) + 1;
+
+
+  if (diff <= 0) {
+
+    output.value =
+      "Tanggal tidak valid";
+
+    return;
+  }
+
+
+  output.value =
+    `${diff} hari`;
+
+}
+
+
+document.addEventListener(
+  "change",
+  function(event) {
+
+    if (
+      event.target.id ===
+        "tripStart" ||
+      event.target.id ===
+        "tripEnd"
+    ) {
+
+      calculateDuration();
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   CONFLICT DETECTION
+===================================================== */
+
+function findTripConflicts(
+  employeeId,
+  start,
+  end,
+  excludeId = null
+) {
+
+  return trips.filter(
+    trip => {
+
+      if (
+        excludeId &&
+        trip.id === excludeId
+      ) {
+        return false;
+      }
+
+      const participants = [
+        trip.employeeId,
+        ...(trip.followers || [])
+      ];
+
+      if (
+        !participants.includes(
+          employeeId
+        )
+      ) {
+        return false;
+      }
+
+      return (
+        start <= trip.end &&
+        end >= trip.start
+      );
+
+    }
+  );
+
+}
+
+
+/* =====================================================
+   SAVE TRIP
+===================================================== */
+
+function saveTrip() {
+
+  const employeeId =
+    document.getElementById(
+      "tripEmployee"
+    ).value;
+
+  const employee =
+    employees.find(
+      e => e.id === employeeId
+    );
+
+
+  if (!employee) {
+
+    showToast(
+      "Pilih pegawai terlebih dahulu.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  const start =
+    document.getElementById(
+      "tripStart"
+    ).value;
+
+  const end =
+    document.getElementById(
+      "tripEnd"
+    ).value;
+
+  const destination =
+    document.getElementById(
+      "tripDestination"
+    ).value.trim();
+
+
+  if (
+    !start ||
+    !end ||
+    !destination
+  ) {
+
+    showToast(
+      "Lengkapi tanggal dan tujuan perjalanan.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  if (end < start) {
+
+    showToast(
+      "Tanggal kembali tidak boleh sebelum tanggal berangkat.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  const followerSelect =
+    document.getElementById(
+      "tripFollowers"
+    );
+
+
+  const followers =
+    [...followerSelect.selectedOptions]
+      .map(
+        option => option.value
+      );
+
+
+  const participants = [
+    employeeId,
+    ...followers
+  ];
+
+
+  const conflicts = [];
+
+  participants.forEach(
+    id => {
+
+      const found =
+        findTripConflicts(
+          id,
+          start,
+          end
+        );
+
+      found.forEach(
+        trip => {
+
+          if (
+            !conflicts.some(
+              c => c.id === trip.id
+            )
+          ) {
+
+            conflicts.push(
+              trip
+            );
+
+          }
+
+        }
+      );
+
+    }
+  );
+
+
+  if (conflicts.length) {
+
+    const names =
+      conflicts
+        .map(
+          c =>
+            `${c.number} (${c.destination})`
+        )
+        .join(", ");
+
+
+    const proceed =
+      confirm(
+        "Terdapat potensi benturan jadwal dengan perjalanan berikut:\n\n" +
+        names +
+        "\n\nTetap simpan?"
+      );
+
+    if (!proceed) {
+      return;
+    }
+
+  }
+
+
+  const trip = {
+
+    id:
+      generateId("TRIP"),
+
+    number:
+      document.getElementById(
+        "tripNumber"
+      ).value.trim() ||
+      generateTripNumber(),
+
+    employeeId,
+
+    employeeName:
+      employee.name,
+
+    employeeNip:
+      employee.nip || "",
+
+    rank:
+      document.getElementById(
+        "tripRank"
+      ).value.trim() ||
+      employee.rank ||
+      "",
+
+    position:
+      document.getElementById(
+        "tripPosition"
+      ).value.trim() ||
+      employee.position ||
+      "",
+
+    followers,
+
+    origin:
+      document.getElementById(
+        "tripOrigin"
+      ).value.trim(),
+
+    destination,
+
+    start,
+
+    end,
+
+    duration:
+      calculateDurationValue(
+        start,
+        end
+      ),
+
+    transport:
+      document.getElementById(
+        "tripTransport"
+      ).value,
+
+    budget:
+      document.getElementById(
+        "tripBudget"
+      ).value.trim(),
+
+    activity:
+      document.getElementById(
+        "tripActivity"
+      ).value.trim(),
+
+    ppk:
+      document.getElementById(
+        "tripPPK"
+      ).value.trim(),
+
+    status:
+      "Draft",
+
+    createdAt:
+      new Date().toISOString(),
+
+    documents: {
+
+      suratTugas: false,
+
+      spd: false,
+
+      rincian: false,
+
+      laporan: false
+
+    },
+
+    geotags: []
+
+  };
+
+
+  trips.unshift(
+    trip
+  );
+
+
+  saveStorage();
+
+  resetTripForm();
+
+  closeModal(
+    "modalQuickTrip"
+  );
+
+  renderDashboard();
+
+  renderTrips();
+
+  showToast(
+    "Perjalanan dinas berhasil dibuat."
+  );
+
+}
+
+
+/* =====================================================
+   DURATION VALUE
+===================================================== */
+
+function calculateDurationValue(
+  start,
+  end
+) {
+
+  const d1 =
+    new Date(
+      start + "T00:00:00"
+    );
+
+  const d2 =
+    new Date(
+      end + "T00:00:00"
+    );
+
+  return (
+    Math.round(
+      (d2 - d1) /
+      86400000
+    ) + 1
+  );
+
+}
+
+
+/* =====================================================
+   RESET TRIP FORM
+===================================================== */
+
+function resetTripForm() {
+
+  document
+    .getElementById(
+      "tripForm"
+    )
+    .reset();
+
+  document.getElementById(
+    "tripNumber"
+  ).value =
+    generateTripNumber();
+
+  document.getElementById(
+    "tripOrigin"
+  ).value =
+    "Malaka";
+
+  document.getElementById(
+    "tripDuration"
+  ).value =
+    "";
+
+}
+
+
+/* =====================================================
+   STATUS
+===================================================== */
+
+function calculateStatus(
+  trip
+) {
+
+  const today =
+    new Date();
+
+  today.setHours(
+    0,0,0,0
+  );
+
+
+  const start =
+    new Date(
+      trip.start + "T00:00:00"
+    );
+
+  const end =
+    new Date(
+      trip.end + "T23:59:59"
+    );
+
+
+  if (
+    trip.status === "Selesai"
+  ) {
+    return "Selesai";
+  }
+
+
+  if (
+    today < start
+  ) {
+    return "Akan Berangkat";
+  }
+
+
+  if (
+    today >= start &&
+    today <= end
+  ) {
+    return "Berjalan";
+  }
+
+
+  if (
+    !trip.documents ||
+    !trip.documents.laporan
+  ) {
+    return "Perlu Laporan";
+  }
+
+
+  return "Selesai";
+
+}
+
+
+function badgeStatus(status) {
+
+  const classes = {
+
+    "Draft":
+      "badge-draft",
+
+    "Akan Berangkat":
+      "badge-upcoming",
+
+    "Berjalan":
+      "badge-running",
+
+    "Perlu Laporan":
+      "badge-report",
+
+    "Selesai":
+      "badge-done"
+
+  };
+
+
+  return `
+    <span class="badge ${classes[status] || "badge-draft"}">
+      ${escapeHtml(status)}
+    </span>
+  `;
+
+}
+
+
+/* =====================================================
+   TRIP TABLE
+===================================================== */
+
+function renderTrips() {
+
+  const container =
+    document.getElementById(
+      "tripTable"
+    );
+
+  if (!container) {
+    return;
+  }
+
+
+  const search =
+    (
+      document.getElementById(
+        "searchTrip"
+      )?.value || ""
+    )
+    .toLowerCase();
+
+
+  const filter =
+    document.getElementById(
+      "filterStatus"
+    )?.value || "";
+
+
+  const filtered =
+    trips.filter(
+      trip => {
+
+        const status =
+          calculateStatus(
+            trip
+          );
+
+        const text =
+          [
+            trip.number,
+            trip.employeeName,
+            trip.destination,
+            trip.activity
+          ]
+          .join(" ")
+          .toLowerCase();
+
+
+        return (
+          (!search ||
+            text.includes(search)) &&
+          (!filter ||
+            status === filter)
+        );
+
+      }
+    );
+
+
+  if (!filtered.length) {
+
+    container.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">✈</div>
+        <h4>Belum ada perjalanan</h4>
+        <p>Buat perjalanan dinas baru untuk mulai menggunakan sistem.</p>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  let html = `
+    <table>
+
+      <thead>
+
+        <tr>
+
+          <th>Nomor</th>
+
+          <th>Pelaksana</th>
+
+          <th>Tujuan</th>
+
+          <th>Tanggal</th>
+
+          <th>Durasi</th>
+
+          <th>Status</th>
+
+          <th>Kelengkapan</th>
+
+          <th>Aksi</th>
+
+        </tr>
+
+      </thead>
+
+      <tbody>
+  `;
+
+
+  filtered.forEach(
+    trip => {
+
+      const status =
+        calculateStatus(
+          trip
+        );
+
+
+      const completion =
+        documentCompletion(
+          trip
+        );
+
+
+      html += `
+
+        <tr>
+
+          <td>
+            <strong>
+              ${escapeHtml(trip.number)}
+            </strong>
+          </td>
+
+          <td>
+            ${escapeHtml(trip.employeeName)}
+          </td>
+
+          <td>
+            ${escapeHtml(trip.destination)}
+          </td>
+
+          <td>
+            ${shortDate(trip.start)}
+            —
+            ${shortDate(trip.end)}
+          </td>
+
+          <td>
+            ${trip.duration} hari
+          </td>
+
+          <td>
+            ${badgeStatus(status)}
+          </td>
+
+          <td style="min-width:120px;">
+
+            <div
+              style="
+                display:flex;
+                align-items:center;
+                gap:7px;
+              ">
+
+              <div
+                class="progress"
+                style="flex:1;">
+                <div
+                  class="progress-bar"
+                  style="width:${completion.percent}%;">
+                </div>
+              </div>
+
+              <span
+                style="font-size:10px;">
+                ${completion.percent}%
+              </span>
+
+            </div>
+
+          </td>
+
+          <td>
+
+            <div
+              style="
+                display:flex;
+                gap:5px;
+                flex-wrap:wrap;
+              ">
+
+              <button
+                class="btn btn-primary btn-sm"
+                onclick="viewTrip('${trip.id}')">
+                Lihat
+              </button>
+
+              <button
+                class="btn btn-outline btn-sm"
+                onclick="previewDocument('surat_tugas','${trip.id}')">
+                Dokumen
+              </button>
+
+              <button
+                class="btn btn-danger btn-sm"
+                onclick="deleteTrip('${trip.id}')">
+                Hapus
+              </button>
+
+            </div>
+
+          </td>
+
+        </tr>
+
+      `;
+
+    }
+  );
+
+
+  html += `
+      </tbody>
+    </table>
+  `;
+
+
+  container.innerHTML =
+    html;
+
+}
+
+
+/* =====================================================
+   DOCUMENT COMPLETION
+===================================================== */
+
+function documentCompletion(
+  trip
+) {
+
+  const docs =
+    trip.documents || {};
+
+  const values = [
+
+    !!docs.suratTugas,
+
+    !!docs.spd,
+
+    !!docs.rincian,
+
+    !!docs.laporan
+
+  ];
+
+
+  const done =
+    values.filter(
+      Boolean
+    ).length;
+
+
+  return {
+
+    done,
+
+    total:
+      values.length,
+
+    percent:
+      Math.round(
+        (
+          done /
+          values.length
+        ) * 100
+      )
+
+  };
+
+}
+
+
+/* =====================================================
+   DELETE TRIP
+===================================================== */
+
+function deleteTrip(id) {
+
+  const trip =
+    trips.find(
+      t => t.id === id
+    );
+
+  if (!trip) {
+    return;
+  }
+
+
+  if (
+    !confirm(
+      `Hapus perjalanan ${trip.number}?`
+    )
+  ) {
+    return;
+  }
+
+
+  trips =
+    trips.filter(
+      t => t.id !== id
+    );
+
+
+  saveStorage();
+
+  renderDashboard();
+
+  renderTrips();
+
+  showToast(
+    "Perjalanan berhasil dihapus."
+  );
+
+}
+
+
+/* =====================================================
+   VIEW TRIP
+===================================================== */
+
+function viewTrip(id) {
+
+  const trip =
+    trips.find(
+      t => t.id === id
+    );
+
+  if (!trip) {
+    return;
+  }
+
+
+  const followerNames =
+    (trip.followers || [])
+      .map(
+        id =>
+          employees.find(
+            e => e.id === id
+          )?.name || id
+      );
+
+
+  const completion =
+    documentCompletion(
+      trip
+    );
+
+
+  alert(
+
+    `DETAIL PERJALANAN DINAS\n\n` +
+
+    `Nomor: ${trip.number}\n` +
+
+    `Pegawai: ${trip.employeeName}\n` +
+
+    `NIP: ${trip.employeeNip || "-"}\n` +
+
+    `Tujuan: ${trip.destination}\n` +
+
+    `Tanggal: ${formatDate(trip.start)} - ${formatDate(trip.end)}\n` +
+
+    `Durasi: ${trip.duration} hari\n` +
+
+    `Transportasi: ${trip.transport}\n` +
+
+    `Status: ${calculateStatus(trip)}\n` +
+
+    `Pengikut: ${followerNames.length ? followerNames.join(", ") : "-"}\n\n` +
+
+    `Kelengkapan dokumen: ${completion.done}/${completion.total}`
+
+  );
+
+}
+
+
+/* =====================================================
+   DASHBOARD
+===================================================== */
+
+function renderDashboard() {
+
+  const total =
+    trips.length;
+
+
+  const now =
+    new Date();
+
+
+  const month =
+    now.getMonth();
+
+  const year =
+    now.getFullYear();
+
+
+  const thisMonth =
+    trips.filter(
+      trip => {
+
+        const d =
+          new Date(
+            trip.start + "T00:00:00"
+          );
+
+        return (
+          d.getMonth() === month &&
+          d.getFullYear() === year
+        );
+
+      }
+    ).length;
+
+
+  const upcoming =
+    trips.filter(
+      trip =>
+        calculateStatus(trip) ===
+        "Akan Berangkat"
+    ).length;
+
+
+  const incomplete =
+    trips.filter(
+      trip =>
+        documentCompletion(
+          trip
+        ).percent < 100
+    ).length;
+
+
+  document.getElementById(
+    "statTotal"
+  ).textContent =
+    total;
+
+
+  document.getElementById(
+    "statMonth"
+  ).textContent =
+    thisMonth;
+
+
+  document.getElementById(
+    "statUpcoming"
+  ).textContent =
+    upcoming;
+
+
+  document.getElementById(
+    "statIncomplete"
+  ).textContent =
+    incomplete;
+
+
+  renderRecentTrips();
+
+  renderDashboardCalendar();
+
+}
+
+
+function renderRecentTrips() {
+
+  const container =
+    document.getElementById(
+      "recentTrips"
+    );
+
+
+  const recent =
+    trips.slice(
+      0,
+      6
+    );
+
+
+  if (!recent.length) {
+
+    container.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">✈</div>
+        <h4>Belum ada perjalanan</h4>
+        <p>Data perjalanan terbaru akan tampil di sini.</p>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  let html = `
+    <table>
+
+      <thead>
+
+        <tr>
+          <th>Nomor</th>
+          <th>Pegawai</th>
+          <th>Tujuan</th>
+          <th>Tanggal</th>
+          <th>Status</th>
+        </tr>
+
+      </thead>
+
+      <tbody>
+  `;
+
+
+  recent.forEach(
+    trip => {
+
+      html += `
+
+        <tr>
+
+          <td>
+            ${escapeHtml(trip.number)}
+          </td>
+
+          <td>
+            ${escapeHtml(trip.employeeName)}
+          </td>
+
+          <td>
+            ${escapeHtml(trip.destination)}
+          </td>
+
+          <td>
+            ${shortDate(trip.start)}
+          </td>
+
+          <td>
+            ${badgeStatus(
+              calculateStatus(trip)
+            )}
+          </td>
+
+        </tr>
+
+      `;
+
+    }
+  );
+
+
+  html += `
+      </tbody>
+    </table>
+  `;
+
+
+  container.innerHTML =
+    html;
+
+}
+
+
+/* =====================================================
+   CALENDAR HELPERS
+===================================================== */
+
+function getMonthName(
+  date
+) {
+
+  return date.toLocaleDateString(
+    "id-ID",
+    {
+      month: "long",
+      year: "numeric"
+    }
+  );
+
+}
+
+
+function getCalendarEventsForDate(
+  date
+) {
+
+  const dateString =
+    date.toISOString()
+      .split("T")[0];
+
+
+  return trips.filter(
+    trip =>
+      trip.start <= dateString &&
+      trip.end >= dateString
+  );
+
+}
+
+
+function renderCalendar(
+  containerId,
+  date
+) {
+
+  const container =
+    document.getElementById(
+      containerId
+    );
+
+  if (!container) {
+    return;
+  }
+
+
+  const year =
+    date.getFullYear();
+
+  const month =
+    date.getMonth();
+
+
+  const first =
+    new Date(
+      year,
+      month,
+      1
+    );
+
+
+  const last =
+    new Date(
+      year,
+      month + 1,
+      0
+    );
+
+
+  let startDay =
+    first.getDay();
+
+
+  // Monday = first day
+  startDay =
+    startDay === 0
+      ? 6
+      : startDay - 1;
+
+
+  const days =
+    last.getDate();
+
+
+  let html = `
+
+    <div class="calendar-grid">
+
+      <div class="calendar-day-name">
+        Sen
+      </div>
+
+      <div class="calendar-day-name">
+        Sel
+      </div>
+
+      <div class="calendar-day-name">
+        Rab
+      </div>
+
+      <div class="calendar-day-name">
+        Kam
+      </div>
+
+      <div class="calendar-day-name">
+        Jum
+      </div>
+
+      <div class="calendar-day-name">
+        Sab
+      </div>
+
+      <div class="calendar-day-name">
+        Min
+      </div>
+
+  `;
+
+
+  const previousLast =
+    new Date(
+      year,
+      month,
+      0
+    ).getDate();
+
+
+  for (
+    let i = startDay - 1;
+    i >= 0;
+    i--
+  ) {
+
+    const number =
+      previousLast - i;
+
+
+    html += `
+
+      <div class="calendar-cell other-month">
+
+        <div class="calendar-number">
+          ${number}
+        </div>
+
+      </div>
+
+    `;
+
+  }
+
+
+  for (
+    let day = 1;
+    day <= days;
+    day++
+  ) {
+
+    const current =
+      new Date(
+        year,
+        month,
+        day
+      );
+
+
+    const dateString =
+      `${year}-${String(month + 1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+
+
+    const events =
+      trips.filter(
+        trip =>
+          trip.start <= dateString &&
+          trip.end >= dateString
+      );
+
+
+    html += `
+
+      <div class="calendar-cell">
+
+        <div class="calendar-number">
+          ${day}
+        </div>
+
+    `;
+
+
+    events
+      .slice(0, 4)
+      .forEach(
+        trip => {
+
+          html += `
+
+            <div
+              class="calendar-event"
+              title="${escapeHtml(trip.employeeName)} — ${escapeHtml(trip.destination)}"
+              onclick="viewTrip('${trip.id}')">
+
+              ${escapeHtml(trip.employeeName)}
+              →
+              ${escapeHtml(trip.destination)}
+
+            </div>
+
+          `;
+
+        }
+      );
+
+
+    if (events.length > 4) {
+
+      html += `
+
+        <div
+          style="
+            font-size:8px;
+            color:var(--muted);
+          ">
+
+          +${events.length - 4} lainnya
+
+        </div>
+
+      `;
+
+    }
+
+
+    html += `
+      </div>
+    `;
+
+  }
+
+
+  const totalCells =
+    startDay + days;
+
+
+  const remaining =
+    (7 - (
+      totalCells % 7
+    )) % 7;
+
+
+  for (
+    let day = 1;
+    day <= remaining;
+    day++
+  ) {
+
+    html += `
+
+      <div class="calendar-cell other-month">
+
+        <div class="calendar-number">
+          ${day}
+        </div>
+
+      </div>
+
+    `;
+
+  }
+
+
+  html += `
+    </div>
+  `;
+
+
+  container.innerHTML =
+    html;
+
+}
+
+
+function renderDashboardCalendar() {
+
+  renderCalendar(
+    "dashboardCalendar",
+    new Date()
+  );
+
+}
+
+
+function renderFullCalendar() {
+
+  document.getElementById(
+    "calendarTitle"
+  ).textContent =
+    getMonthName(
+      currentCalendarDate
+    );
+
+
+  renderCalendar(
+    "fullCalendar",
+    currentCalendarDate
+  );
+
+}
+
+
+function calendarPrev() {
+
+  currentCalendarDate =
+    new Date(
+      currentCalendarDate.getFullYear(),
+      currentCalendarDate.getMonth() - 1,
+      1
+    );
+
+  renderFullCalendar();
+
+}
+
+
+function calendarNext() {
+
+  currentCalendarDate =
+    new Date(
+      currentCalendarDate.getFullYear(),
+      currentCalendarDate.getMonth() + 1,
+      1
+    );
+
+  renderFullCalendar();
+
+}
+
+
+function calendarToday() {
+
+  currentCalendarDate =
+    new Date();
+
+  renderFullCalendar();
+
+}
+
+
+/* =====================================================
+   MONITORING
+===================================================== */
+
+function renderMonitoring() {
+
+  const counts = {
+
+    Draft: 0,
+
+    "Akan Berangkat": 0,
+
+    Berjalan: 0,
+
+    "Perlu Laporan": 0,
+
+    Selesai: 0
+
+  };
+
+
+  trips.forEach(
+    trip => {
+
+      const status =
+        calculateStatus(
+          trip
+        );
+
+      counts[status] =
+        (counts[status] || 0) + 1;
+
+    }
+  );
+
+
+  document.getElementById(
+    "monitorDraft"
+  ).textContent =
+    counts.Draft || 0;
+
+
+  document.getElementById(
+    "monitorRunning"
+  ).textContent =
+    counts.Berjalan || 0;
+
+
+  document.getElementById(
+    "monitorReport"
+  ).textContent =
+    counts["Perlu Laporan"] || 0;
+
+
+  document.getElementById(
+    "monitorDone"
+  ).textContent =
+    counts.Selesai || 0;
+
+
+  const container =
+    document.getElementById(
+      "monitorTable"
+    );
+
+
+  if (!trips.length) {
+
+    container.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">📍</div>
+        <h4>Belum ada data monitoring</h4>
+        <p>Data perjalanan akan tampil di sini.</p>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  let html = `
+
+    <table>
+
+      <thead>
+
+        <tr>
+
+          <th>Perjalanan</th>
+
+          <th>Pelaksana</th>
+
+          <th>Tujuan</th>
+
+          <th>Status</th>
+
+          <th>Dokumen</th>
+
+          <th>Geotag</th>
+
+          <th>Aksi</th>
+
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+  `;
+
+
+  trips.forEach(
+    trip => {
+
+      const completion =
+        documentCompletion(
+          trip
+        );
+
+
+      const geoCount =
+        (trip.geotags || [])
+          .length;
+
+
+      html += `
+
+        <tr>
+
+          <td>
+            ${escapeHtml(trip.number)}
+          </td>
+
+          <td>
+            ${escapeHtml(trip.employeeName)}
+          </td>
+
+          <td>
+            ${escapeHtml(trip.destination)}
+          </td>
+
+          <td>
+            ${badgeStatus(
+              calculateStatus(trip)
+            )}
+          </td>
+
+          <td>
+            ${completion.done}/${completion.total}
+          </td>
+
+          <td>
+            ${geoCount} titik
+          </td>
+
+          <td>
+
+            <button
+              class="btn btn-secondary btn-sm"
+              onclick="captureLocationForTrip('${trip.id}')">
+
+              📍 Geotag
+
+            </button>
+
+          </td>
+
+        </tr>
+
+      `;
+
+    }
+  );
+
+
+  html += `
+      </tbody>
+    </table>
+  `;
+
+
+  container.innerHTML =
+    html;
+
+}
+
+
+/* =====================================================
+   GEOLOCATION
+===================================================== */
+
+function captureLocation() {
+
+  if (
+    !navigator.geolocation
+  ) {
+
+    showToast(
+      "Browser tidak mendukung geolocation.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  navigator.geolocation.getCurrentPosition(
+
+    position => {
+
+      const data = {
+
+        latitude:
+          position.coords.latitude,
+
+        longitude:
+          position.coords.longitude,
+
+        accuracy:
+          position.coords.accuracy,
+
+        timestamp:
+          new Date().toISOString()
+
+      };
+
+
+      localStorage.setItem(
+        STORAGE_KEYS.location,
+        JSON.stringify(data)
+      );
+
+
+      showToast(
+        `Lokasi berhasil diambil: ${data.latitude.toFixed(6)}, ${data.longitude.toFixed(6)}`
+      );
+
+    },
+
+    error => {
+
+      showToast(
+        "Lokasi tidak dapat diambil. Pastikan izin lokasi diberikan.",
+        "error"
+      );
+
+    },
+
+    {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 0
+    }
+
+  );
+
+}
+
+
+function captureLocationForTrip(
+  tripId
+) {
+
+  const trip =
+    trips.find(
+      t => t.id === tripId
+    );
+
+  if (!trip) {
+    return;
+  }
+
+
+  if (
+    !navigator.geolocation
+  ) {
+
+    showToast(
+      "Browser tidak mendukung geolocation.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  navigator.geolocation.getCurrentPosition(
+
+    position => {
+
+      if (!trip.geotags) {
+        trip.geotags = [];
+      }
+
+
+      trip.geotags.push({
+
+        latitude:
+          position.coords.latitude,
+
+        longitude:
+          position.coords.longitude,
+
+        accuracy:
+          position.coords.accuracy,
+
+        timestamp:
+          new Date().toISOString()
+
+      });
+
+
+      saveStorage();
+
+      renderMonitoring();
+
+      showToast(
+        "Geotag perjalanan berhasil disimpan."
+      );
+
+    },
+
+    () => {
+
+      showToast(
+        "Lokasi tidak dapat diambil.",
+        "error"
+      );
+
+    },
+
+    {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 0
+    }
+
+  );
+
+}
+
+
+/* =====================================================
+   DOCUMENT SELECT
+===================================================== */
+
+function populateDocumentTrips() {
+
+  const select =
+    document.getElementById(
+      "documentTripSelect"
+    );
+
+  if (!select) {
+    return;
+  }
+
+
+  select.innerHTML = `
+    <option value="">
+      Pilih perjalanan...
+    </option>
+  `;
+
+
+  trips.forEach(
+    trip => {
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+      option.value =
+        trip.id;
+
+      option.textContent =
+        `${trip.number} — ${trip.employeeName} — ${trip.destination}`;
+
+      select.appendChild(
+        option
+      );
+
+    }
+  );
+
+}
+
+
+function loadDocumentTrip() {
+
+  const id =
+    document.getElementById(
+      "documentTripSelect"
+    ).value;
+
+
+  const actions =
+    document.getElementById(
+      "documentActions"
+    );
+
+
+  actions.style.display =
+    id
+      ? "block"
+      : "none";
+
+
+  currentDocumentTrip =
+    trips.find(
+      t => t.id === id
+    ) || null;
+
+}
+
+
+/* =====================================================
+   DOCUMENT GENERATOR
+===================================================== */
+
+function previewDocument(
+  type,
+  tripId = null
+) {
+
+  let trip = null;
+
+
+  if (tripId) {
+
+    trip =
+      trips.find(
+        t => t.id === tripId
+      );
+
+  }
+  else {
+
+    trip =
+      currentDocumentTrip;
+
+  }
+
+
+  if (!trip) {
+
+    showToast(
+      "Pilih perjalanan terlebih dahulu.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  currentDocumentTrip =
+    trip;
+
+  currentDocumentType =
+    type;
+
+
+  let title = "";
+
+  let content = "";
+
+
+  if (
+    type ===
+    "surat_tugas"
+  ) {
+
+    title =
+      "SURAT TUGAS";
+
+    content =
+      generateSuratTugas(
+        trip
+      );
+
+  }
+
+
+  if (
+    type ===
+    "spd"
+  ) {
+
+    title =
+      "SURAT PERJALANAN DINAS";
+
+    content =
+      generateSPD(
+        trip
+      );
+
+  }
+
+
+  if (
+    type ===
+    "rincian"
+  ) {
+
+    title =
+      "RINCIAN BIAYA PERJALANAN DINAS";
+
+    content =
+      generateRincian(
+        trip
+      );
+
+  }
+
+
+  if (
+    type ===
+    "laporan"
+  ) {
+
+    title =
+      "LAPORAN PERJALANAN DINAS";
+
+    content =
+      generateLaporan(
+        trip
+      );
+
+  }
+
+
+  document.getElementById(
+    "documentModalTitle"
+  ).textContent =
+    title;
+
+
+  document.getElementById(
+    "documentPreview"
+  ).innerHTML =
+    content;
+
+
+  openModal(
+    "modalDocument"
+  );
+
+}
+
+
+/* =====================================================
+   PAPER HEADER
+===================================================== */
+
+function paperHeader() {
+
+  return `
+
+    <div class="paper-header">
+
+      <div class="institution">
+        ${escapeHtml(settings.institution)}
+      </div>
+
+      <div class="office">
+        ${escapeHtml(settings.office)}
+      </div>
+
+      <div class="address">
+        ${escapeHtml(settings.address)}
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* =====================================================
+   SURAT TUGAS
+===================================================== */
+
+function generateSuratTugas(
+  trip
+) {
+
+  const employee =
+    employees.find(
+      e => e.id === trip.employeeId
+    );
+
+
+  const followerNames =
+    (trip.followers || [])
+      .map(
+        id =>
+          employees.find(
+            e => e.id === id
+          )?.name || "-"
+      );
+
+
+  return `
+
+    <div class="paper">
+
+      ${paperHeader()}
+
+      <div class="paper-title">
+        SURAT TUGAS
+      </div>
+
+      <div class="paper-number">
+        Nomor: ${escapeHtml(trip.number)}
+      </div>
+
+
+      <p>
+        Yang bertanda tangan di bawah ini:
+      </p>
+
+
+      <table class="paper-table paper-no-border">
+
+        <tr>
+          <td width="25%">
+            Nama
+          </td>
+
+          <td>
+            : ${escapeHtml(trip.ppk || "-")}
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            Jabatan
+          </td>
+
+          <td>
+            : Pejabat Pembuat Komitmen
+          </td>
+        </tr>
+
+      </table>
+
+
+      <p>
+        memberikan tugas kepada:
+      </p>
+
+
+      <table class="paper-table">
+
+        <tr>
+          <th width="8%">
+            No
+          </th>
+
+          <th>
+            Nama / NIP
+          </th>
+
+          <th>
+            Pangkat/Golongan
+          </th>
+
+          <th>
+            Jabatan
+          </th>
+        </tr>
+
+
+        <tr>
+
+          <td>
+            1
+          </td>
+
+          <td>
+            ${escapeHtml(trip.employeeName)}
+            <br>
+            ${escapeHtml(trip.employeeNip || "-")}
+          </td>
+
+          <td>
+            ${escapeHtml(trip.rank || "-")}
+          </td>
+
+          <td>
+            ${escapeHtml(trip.position || "-")}
+          </td>
+
+        </tr>
+
+
+        ${
+          followerNames.map(
+            (name, index) => {
+
+              const follower =
+                employees.find(
+                  e =>
+                    e.id ===
+                    trip.followers[index]
+                );
+
+
+              return `
+
+                <tr>
+
+                  <td>
+                    ${index + 2}
+                  </td>
+
+                  <td>
+                    ${escapeHtml(name)}
+                    <br>
+                    ${escapeHtml(follower?.nip || "-")}
+                  </td>
+
+                  <td>
+                    ${escapeHtml(follower?.rank || "-")}
+                  </td>
+
+                  <td>
+                    ${escapeHtml(follower?.position || "-")}
+                  </td>
+
+                </tr>
+
+              `;
+
+            }
+          ).join("")
+        }
+
+      </table>
+
+
+      <p>
+        Untuk melaksanakan perjalanan dinas dengan maksud:
+      </p>
+
+
+      <p style="text-align:justify;">
+        ${escapeHtml(trip.activity)}
+      </p>
+
+
+      <table class="paper-table paper-no-border">
+
+        <tr>
+          <td width="25%">
+            Tempat berangkat
+          </td>
+
+          <td>
+            : ${escapeHtml(trip.origin)}
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            Tempat tujuan
+          </td>
+
+          <td>
+            : ${escapeHtml(trip.destination)}
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            Waktu pelaksanaan
+          </td>
+
+          <td>
+            : ${formatDate(trip.start)}
+            s.d.
+            ${formatDate(trip.end)}
+          </td>
+        </tr>
+
+      </table>
+
+
+      <p style="margin-top:25px;">
+        Demikian surat tugas ini dibuat untuk dilaksanakan
+        dengan penuh tanggung jawab.
+      </p>
+
+
+      <div class="signature">
+
+        <div>
+          Malaka, ${formatDate(new Date().toISOString().split("T")[0])}
+        </div>
+
+        <div style="margin-top:5px;">
+          Pejabat yang Menugaskan
+        </div>
+
+        <div style="height:70px;"></div>
+
+        <strong>
+          ${escapeHtml(trip.ppk || "________________")}
+        </strong>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* =====================================================
+   SPD
+===================================================== */
+
+function generateSPD(
+  trip
+) {
+
+  return `
+
+    <div class="paper">
+
+      ${paperHeader()}
+
+      <div class="paper-title">
+        SURAT PERJALANAN DINAS
+      </div>
+
+      <div class="paper-number">
+        Nomor: ${escapeHtml(trip.number)}
+      </div>
+
+
+      <table class="paper-table">
+
+        <tr>
+          <td width="7%">
+            1
+          </td>
+
+          <td width="35%">
+            Pejabat Pembuat Komitmen
+          </td>
+
+          <td>
+            ${escapeHtml(trip.ppk || "-")}
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>
+            2
+          </td>
+
+          <td>
+            Nama/NIP Pelaksana
+          </td>
+
+          <td>
+            ${escapeHtml(trip.employeeName)}
+            <br>
+            ${escapeHtml(trip.employeeNip || "-")}
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>
+            3
+          </td>
+
+          <td>
+            Pangkat/Golongan
+          </td>
+
+          <td>
+            ${escapeHtml(trip.rank || "-")}
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>
+            4
+          </td>
+
+          <td>
+            Jabatan/Instansi
+          </td>
+
+          <td>
+            ${escapeHtml(trip.position || "-")}
+            /
+            ${escapeHtml(settings.office)}
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>
+            5
+          </td>
+
+          <td>
+            Maksud Perjalanan Dinas
+          </td>
+
+          <td>
+            ${escapeHtml(trip.activity)}
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>
+            6
+          </td>
+
+          <td>
+            Alat Angkutan
+          </td>
+
+          <td>
+            ${escapeHtml(trip.transport)}
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>
+            7
+          </td>
+
+          <td>
+            Tempat Berangkat
+          </td>
+
+          <td>
+            ${escapeHtml(trip.origin)}
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>
+            8
+          </td>
+
+          <td>
+            Tempat Tujuan
+          </td>
+
+          <td>
+            ${escapeHtml(trip.destination)}
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>
+            9
+          </td>
+
+          <td>
+            Lama Perjalanan Dinas
+          </td>
+
+          <td>
+            ${trip.duration} hari
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>
+            10
+          </td>
+
+          <td>
+            Tanggal Berangkat
+          </td>
+
+          <td>
+            ${formatDate(trip.start)}
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>
+            11
+          </td>
+
+          <td>
+            Tanggal Kembali
+          </td>
+
+          <td>
+            ${formatDate(trip.end)}
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>
+            12
+          </td>
+
+          <td>
+            Pembebanan Anggaran
+          </td>
+
+          <td>
+            ${escapeHtml(trip.budget || "-")}
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>
+            13
+          </td>
+
+          <td>
+            Geotagging
+          </td>
+
+          <td>
+            Dicatat melalui sistem elektronik SiPERJADIN
+          </td>
+        </tr>
+
+      </table>
+
+
+      <div class="signature">
+
+        <div>
+          Mengetahui,
+        </div>
+
+        <div>
+          Pejabat Pembuat Komitmen
+        </div>
+
+        <div style="height:70px;"></div>
+
+        <strong>
+          ${escapeHtml(trip.ppk || "________________")}
+        </strong>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* =====================================================
+   RINCIAN BIAYA
+===================================================== */
+
+function generateRincian(
+  trip
+) {
+
+  return `
+
+    <div class="paper">
+
+      ${paperHeader()}
+
+      <div class="paper-title">
+        RINCIAN BIAYA PERJALANAN DINAS
+      </div>
+
+      <div class="paper-number">
+        Nomor: ${escapeHtml(trip.number)}
+      </div>
+
+
+      <table class="paper-table">
+
+        <tr>
+
+          <th width="8%">
+            No
+          </th>
+
+          <th>
+            Uraian
+          </th>
+
+          <th width="20%">
+            Jumlah
+          </th>
+
+          <th width="25%">
+            Keterangan
+          </th>
+
+        </tr>
+
+
+        <tr>
+
+          <td>
+            1
+          </td>
+
+          <td>
+            Uang Harian
+          </td>
+
+          <td>
+            Rp ................
+          </td>
+
+          <td>
+            Sesuai standar biaya yang berlaku
+          </td>
+
+        </tr>
+
+
+        <tr>
+
+          <td>
+            2
+          </td>
+
+          <td>
+            Transportasi
+          </td>
+
+          <td>
+            Rp ................
+          </td>
+
+          <td>
+            Sesuai bukti/ketentuan
+          </td>
+
+        </tr>
+
+
+        <tr>
+
+          <td>
+            3
+          </td>
+
+          <td>
+            Penginapan
+          </td>
+
+          <td>
+            Rp ................
+          </td>
+
+          <td>
+            Sesuai standar biaya dan bukti
+          </td>
+
+        </tr>
+
+
+        <tr>
+
+          <td>
+            4
+          </td>
+
+          <td>
+            Biaya lainnya yang sah
+          </td>
+
+          <td>
+            Rp ................
+          </td>
+
+          <td>
+            Sesuai ketentuan
+          </td>
+
+        </tr>
+
+
+        <tr>
+
+          <th colspan="2">
+            TOTAL
+          </th>
+
+          <th>
+            Rp ................
+          </th>
+
+          <th>
+          </th>
+
+        </tr>
+
+      </table>
+
+
+      <p style="margin-top:20px;">
+        Sumber anggaran:
+        <strong>
+          ${escapeHtml(trip.budget || "-")}
+        </strong>
+      </p>
+
+
+      <div class="signature">
+
+        <div>
+          Malaka, ${formatDate(new Date().toISOString().split("T")[0])}
+        </div>
+
+        <div>
+          Pelaksana Perjalanan Dinas
+        </div>
+
+        <div style="height:70px;"></div>
+
+        <strong>
+          ${escapeHtml(trip.employeeName)}
+        </strong>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* =====================================================
+   LAPORAN PERJALANAN
+===================================================== */
+
+function generateLaporan(
+  trip
+) {
+
+  return `
+
+    <div class="paper">
+
+      ${paperHeader()}
+
+      <div class="paper-title">
+        LAPORAN PERJALANAN DINAS
+      </div>
+
+      <div class="paper-number">
+        Nomor: ${escapeHtml(trip.number)}
+      </div>
+
+
+      <table class="paper-table">
+
+        <tr>
+          <td width="30%">
+            Nama
+          </td>
+
+          <td>
+            ${escapeHtml(trip.employeeName)}
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            NIP
+          </td>
+
+          <td>
+            ${escapeHtml(trip.employeeNip || "-")}
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            Jabatan
+          </td>
+
+          <td>
+            ${escapeHtml(trip.position || "-")}
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            Tujuan
+          </td>
+
+          <td>
+            ${escapeHtml(trip.destination)}
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            Tanggal
+          </td>
+
+          <td>
+            ${formatDate(trip.start)}
+            s.d.
+            ${formatDate(trip.end)}
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            Lama
+          </td>
+
+          <td>
+            ${trip.duration} hari
+          </td>
+        </tr>
+
+      </table>
+
+
+      <p>
+        <strong>I. Maksud dan Tujuan</strong>
+      </p>
+
+      <p style="text-align:justify;">
+        ${escapeHtml(trip.activity)}
+      </p>
+
+
+      <p style="margin-top:18px;">
+        <strong>II. Hasil Pelaksanaan</strong>
+      </p>
+
+      <p>
+        ................................................................................................
+      </p>
+
+      <p>
+        ................................................................................................
+      </p>
+
+      <p>
+        ................................................................................................
+      </p>
+
+
+      <p style="margin-top:18px;">
+        <strong>III. Kesimpulan</strong>
+      </p>
+
+      <p>
+        ................................................................................................
+      </p>
+
+      <p>
+        ................................................................................................
+      </p>
+
+
+      <div class="signature">
+
+        <div>
+          Malaka, ${formatDate(new Date().toISOString().split("T")[0])}
+        </div>
+
+        <div>
+          Pelaksana,
+        </div>
+
+        <div style="height:70px;"></div>
+
+        <strong>
+          ${escapeHtml(trip.employeeName)}
+        </strong>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* =====================================================
+   PRINT DOCUMENT
+===================================================== */
+
+function printDocument() {
+
+  window.print();
+
+}
+
+
+/* =====================================================
+   REPORT
+===================================================== */
+
+function renderReports() {
+
+  const total =
+    trips.length;
+
+
+  const done =
+    trips.filter(
+      t =>
+        calculateStatus(t) ===
+        "Selesai"
+    ).length;
+
+
+  const need =
+    trips.filter(
+      t =>
+        documentCompletion(t)
+          .percent < 100
+    ).length;
+
+
+  const complete =
+    total
+      ? Math.round(
+          (
+            trips.reduce(
+              (sum, trip) =>
+                sum +
+                documentCompletion(trip)
+                  .percent,
+              0
+            ) /
+            total
+          )
+        )
+      : 0;
+
+
+  document.getElementById(
+    "reportTotal"
+  ).textContent =
+    total;
+
+
+  document.getElementById(
+    "reportDone"
+  ).textContent =
+    done;
+
+
+  document.getElementById(
+    "reportNeed"
+  ).textContent =
+    need;
+
+
+  document.getElementById(
+    "reportComplete"
+  ).textContent =
+    complete + "%";
+
+}
+
+
+/* =====================================================
+   CSV EXPORT
+===================================================== */
+
+function exportTripsCSV() {
+
+  if (!trips.length) {
+
+    showToast(
+      "Belum ada data untuk diekspor.",
+      "warning"
+    );
+
+    return;
+  }
+
+
+  const rows =
+    trips.map(
+      trip => ({
+
+        Nomor:
+          trip.number,
+
+        Pegawai:
+          trip.employeeName,
+
+        NIP:
+          trip.employeeNip,
+
+        Pangkat:
+          trip.rank,
+
+        Jabatan:
+          trip.position,
+
+        Asal:
+          trip.origin,
+
+        Tujuan:
+          trip.destination,
+
+        Tanggal_Berangkat:
+          trip.start,
+
+        Tanggal_Kembali:
+          trip.end,
+
+        Durasi:
+          trip.duration,
+
+        Transportasi:
+          trip.transport,
+
+        Anggaran:
+          trip.budget,
+
+        Status:
+          calculateStatus(trip),
+
+        Kelengkapan:
+          documentCompletion(trip).percent + "%"
+
+      })
+    );
+
+
+  const worksheet =
+    XLSX.utils.json_to_sheet(
+      rows
+    );
+
+
+  const workbook =
+    XLSX.utils.book_new();
+
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    "Perjalanan"
+  );
+
+
+  XLSX.writeFile(
+    workbook,
+    "SiPERJADIN-Rekap-Perjalanan.xlsx"
+  );
+
+
+  showToast(
+    "Rekap berhasil diekspor."
+  );
+
+}
+
+
+/* =====================================================
+   SETTINGS
+===================================================== */
+
+function loadSettings() {
+
+  document.getElementById(
+    "settingInstitution"
+  ).value =
+    settings.institution || "";
+
+
+  document.getElementById(
+    "settingOffice"
+  ).value =
+    settings.office || "";
+
+
+  document.getElementById(
+    "settingAddress"
+  ).value =
+    settings.address || "";
+
+
+  document.getElementById(
+    "settingLegal"
+  ).value =
+    settings.legal || "";
+
+}
+
+
+function saveSettings() {
+
+  settings = {
+
+    institution:
+      document.getElementById(
+        "settingInstitution"
+      ).value.trim(),
+
+    office:
+      document.getElementById(
+        "settingOffice"
+      ).value.trim(),
+
+    address:
+      document.getElementById(
+        "settingAddress"
+      ).value.trim(),
+
+    legal:
+      document.getElementById(
+        "settingLegal"
+      ).value.trim()
+
+  };
+
+
+  saveStorage();
+
+
+  showToast(
+    "Pengaturan berhasil disimpan."
+  );
+
+}
+
+
+/* =====================================================
+   INITIALIZATION
+===================================================== */
+
+function initializeApp() {
+
+  populateEmployeeSelects();
+
+  resetTripForm();
+
+  renderDashboard();
+
+  renderEmployees();
+
+  renderTrips();
+
+  loadSettings();
+
+  populateDocumentTrips();
+
+}
+
+
+document.addEventListener(
+  "DOMContentLoaded",
+  initializeApp
+);
+
+
+/* =====================================================
+   CLOSE MODAL WHEN CLICKING BACKDROP
+===================================================== */
+
+document
+  .querySelectorAll(".modal-backdrop")
+  .forEach(
+    modal => {
+
+      modal.addEventListener(
+        "click",
+        function(event) {
+
+          if (
+            event.target === modal
+          ) {
+
+            modal.classList.remove(
+              "show"
+            );
+
+          }
+
+        }
+      );
+
+    }
+  );
+
+
+/* =====================================================
+   KEYBOARD ESC
+===================================================== */
+
+document.addEventListener(
+  "keydown",
+  function(event) {
+
+    if (
+      event.key === "Escape"
+    ) {
+
+      document
+        .querySelectorAll(
+          ".modal-backdrop.show"
+        )
+        .forEach(
+          modal =>
+            modal.classList.remove(
+              "show"
+            )
+        );
+
+    }
+
+  }
+);
+</script>
+
+</body>
+</html>
