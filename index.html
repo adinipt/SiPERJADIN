@@ -1406,6 +1406,164 @@ textarea.form-control{
     box-shadow:none;
   }
 }
+
+/* =========================
+   FITUR TAMBAHAN
+========================= */
+.feature-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:18px;
+}
+.feature-card{
+  background:white;
+  border:1px solid var(--border);
+  border-radius:18px;
+  box-shadow:var(--shadow);
+  padding:18px;
+}
+.feature-card h3{
+  font-size:14px;
+  margin-bottom:5px;
+}
+.feature-card p{
+  font-size:10px;
+  color:#7A8B94;
+  line-height:1.6;
+}
+.feature-icon{
+  width:42px;height:42px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--surface-2);font-size:18px;margin-bottom:12px;
+}
+.rate-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+}
+ .asn-picker{
+  max-height:190px;
+  overflow:auto;
+  display:grid;
+  gap:7px;
+  padding:9px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#FBFDFE;
+}
+.asn-option{
+  display:flex;align-items:center;gap:9px;padding:9px 10px;
+  border:1px solid #EDF2F4;border-radius:9px;background:white;
+  cursor:pointer;font-size:10px;
+}
+.asn-option:hover{background:var(--surface)}
+.asn-option input{accent-color:var(--blue)}
+.asn-option small{display:block;color:#8A9AA3;font-size:8px;margin-top:2px}
+.budget-box{
+  padding:13px;border:1px solid var(--border);border-radius:12px;background:#F8FBFC;
+}
+.legal-summary{
+  margin-top:12px;padding:12px;border-radius:11px;border:1px solid var(--border);background:white;
+}
+.legal-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:9px}
+.legal-summary-item{padding:9px;background:#FBFDFE;border:1px solid #EDF2F4;border-radius:9px}
+.legal-summary-item span{display:block;font-size:8px;color:#8A9AA3;margin-bottom:3px}
+.legal-summary-item strong{font-size:11px}
+.budget-ok{color:var(--success);font-weight:800}
+.budget-over{color:var(--danger);font-weight:800}
+.legal-rate-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.cost-total{
+  font-size:26px;font-weight:800;letter-spacing:-1px;
+}
+.cost-breakdown{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px;
+}
+.cost-item{
+  background:#FBFDFE;border:1px solid #EDF2F4;border-radius:12px;padding:12px;
+}
+.cost-item span{display:block;font-size:9px;color:#8A9AA3;margin-bottom:5px}
+.cost-item strong{font-size:12px}
+.status-flow{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:6px;
+  align-items:start;
+}
+.status-step{
+  position:relative;
+  text-align:center;
+  padding:10px 5px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#FBFDFE;
+  min-height:68px;
+}
+.status-step.done{background:#E4F4EC;border-color:#CBE8D9}
+.status-step.current{background:#E4F2F8;border-color:var(--blue)}
+.status-step .step-dot{
+  width:18px;height:18px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 6px;background:#DCE8ED;font-size:9px;font-weight:800;
+}
+.status-step.done .step-dot{background:var(--success);color:white}
+.status-step.current .step-dot{background:var(--blue);color:white}
+.status-step span{font-size:8px;font-weight:700;line-height:1.25;display:block}
+.document-preview{
+  background:white;
+  border:1px solid #D9E2E7;
+  min-height:500px;
+  padding:42px 48px;
+  color:#111;
+  font-family:"Times New Roman",serif;
+}
+.document-preview .doc-title{text-align:center;font-weight:700;font-size:16px;text-transform:uppercase}
+.document-preview .doc-subtitle{text-align:center;font-size:13px;margin-top:4px}
+.document-preview .doc-line{border-top:2px solid #111;margin:10px 0 18px}
+.document-preview table{min-width:0;margin-top:15px}
+.document-preview td{padding:5px 7px;font-size:12px;border:0}
+.document-preview .signature{border-top:0;padding:45px 0 0;margin-left:auto;width:260px;text-align:center;font-size:12px}
+.geotag-box{
+  display:flex;align-items:center;justify-content:space-between;gap:15px;
+  padding:14px;border:1px dashed var(--blue);background:#F7FBFD;border-radius:12px;
+}
+.coords{font-size:10px;color:#607985;line-height:1.6}
+.mini-actions{display:flex;gap:7px;flex-wrap:wrap}
+.trip-detail-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
+.check-toggle{
+  display:flex;align-items:center;gap:9px;padding:10px 12px;
+  border:1px solid #EDF2F4;border-radius:10px;background:#FBFDFE;
+  cursor:pointer;
+}
+.check-toggle input{accent-color:var(--blue)}
+@media(max-width:1100px){
+  .rate-grid,.cost-breakdown{grid-template-columns:repeat(2,1fr)}
+  .status-flow{grid-template-columns:repeat(4,1fr)}
+}
+@media(max-width:800px){
+  .feature-grid,.trip-detail-grid{grid-template-columns:1fr}
+  .rate-grid,.cost-breakdown,.legal-rate-grid,.legal-summary-grid{grid-template-columns:1fr}
+  .status-flow{grid-template-columns:repeat(2,1fr)}
+  .document-preview{padding:25px 18px}
+}
+@media print{
+  body.print-document .app,
+  body.print-document > .modal-backdrop:not(#documentPreviewModal),
+  body.print-document > .toast-container{display:none!important}
+  body.print-document #documentPreviewModal{
+    display:flex!important;
+    position:static!important;
+    background:white!important;
+    padding:0!important;
+  }
+  body.print-document #documentPreviewModal .modal{
+    width:100%!important;max-height:none!important;box-shadow:none!important;border-radius:0!important;
+  }
+  body.print-document #documentPreviewModal .modal-header,
+  body.print-document #documentPreviewModal .modal-footer{display:none!important}
+  body.print-document #documentPreviewModal .modal-body{padding:0!important}
+  body.print-document .document-preview{border:0;min-height:0}
+}
+
 </style>
 </head>
 
@@ -1453,7 +1611,7 @@ textarea.form-control{
 
     <a href="#" class="nav-item" data-view="pegawai">
       <span class="nav-icon">♙</span>
-      <span>Data Pegawai</span>
+      <span>Master ASN</span>
     </a>
 
     <a href="#" class="nav-item" data-view="dokumen">
@@ -1466,6 +1624,16 @@ textarea.form-control{
       <span>Monitoring</span>
     </a>
 
+    <a href="#" class="nav-item" data-view="status">
+      <span class="nav-icon">⇄</span>
+      <span>Alur Status</span>
+    </a>
+
+    <a href="#" class="nav-item" data-view="geotagging">
+      <span class="nav-icon">⌖</span>
+      <span>Geotagging</span>
+    </a>
+
     <div style="height:10px"></div>
 
     <div class="menu-title">Sistem</div>
@@ -1473,6 +1641,11 @@ textarea.form-control{
     <a href="#" class="nav-item" data-view="laporan">
       <span class="nav-icon">▥</span>
       <span>Laporan</span>
+    </a>
+
+    <a href="#" class="nav-item" data-view="biaya">
+      <span class="nav-icon">▤</span>
+      <span>Biaya & Dokumen</span>
     </a>
 
     <a href="#" class="nav-item" data-view="pengaturan">
@@ -1741,6 +1914,22 @@ textarea.form-control{
             </div>
           </button>
 
+          <button class="quick-action" onclick="switchView('biaya')">
+            <div class="quick-icon">▤</div>
+            <div class="quick-text">
+              <strong>Biaya & Dokumen</strong>
+              <span>Hitung biaya & cetak</span>
+            </div>
+          </button>
+
+          <button class="quick-action" onclick="switchView('geotagging')">
+            <div class="quick-icon">⌖</div>
+            <div class="quick-text">
+              <strong>Geotagging</strong>
+              <span>Simpan koordinat lokasi</span>
+            </div>
+          </button>
+
         </div>
 
       </div>
@@ -2005,13 +2194,13 @@ textarea.form-control{
     <div class="page-actions">
 
       <button class="secondary-btn" onclick="document.getElementById('excelInput').click()">
-        ↑ Import Excel / CSV
+        ↑ Import CSV
       </button>
 
       <input
         type="file"
         id="excelInput"
-        accept=".xlsx,.xls,.csv"
+        accept=".csv"
         hidden
         onchange="importEmployee(event)"
       >
@@ -2663,6 +2852,227 @@ textarea.form-control{
 </div>
 
 
+
+<!-- =====================================================
+     ALUR STATUS
+===================================================== -->
+<div class="view" id="view-status">
+  <div class="page-header">
+    <div>
+      <h2>Alur Status Perjalanan</h2>
+      <p>Alur status dari draft sampai perjalanan selesai.</p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Status Perjalanan</div>
+        <div class="card-subtitle">Klik tombol untuk memajukan status perjalanan.</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div id="statusFlowList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================
+     GEOTAGGING
+===================================================== -->
+<div class="view" id="view-geotagging">
+  <div class="page-header">
+    <div>
+      <h2>Geotagging Browser</h2>
+      <p>Simpan koordinat lokasi perjalanan menggunakan GPS/browser.</p>
+    </div>
+    <button class="primary-btn" onclick="captureCurrentGeotag()">⌖ Ambil Lokasi Sekarang</button>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Lokasi Browser Saat Ini</div>
+          <div class="card-subtitle">Memerlukan izin lokasi dari browser.</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="geotag-box" id="currentGeoBox">
+          <div class="coords" id="currentGeoStatus">Belum mengambil lokasi.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Catatan Geotag Perjalanan</div>
+          <div class="card-subtitle">Koordinat yang sudah tersimpan pada data perjalanan.</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Perjalanan</th>
+              <th>Pelaksana</th>
+              <th>Lokasi</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="geotagTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================
+     BIAYA & DOKUMEN
+===================================================== -->
+<div class="view" id="view-biaya">
+  <div class="page-header">
+    <div>
+      <h2>Biaya & Dokumen</h2>
+      <p>Kalkulator biaya dengan tarif yang dapat diubah serta preview/cetak dokumen.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Dasar Hukum & Master Tarif Perjadin</div>
+        <div class="card-subtitle">Pilih dasar hukum lalu isi tarif sesuai tabel/ketentuan yang berlaku di instansi dan tahun anggaran.</div>
+      </div>
+      <button class="primary-btn" onclick="saveLegalBasisRates()">Simpan Master Tarif</button>
+    </div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label class="form-label">Dasar Hukum</label>
+          <select class="form-control" id="legalBasisEditor" onchange="loadLegalBasisEditor()"></select>
+        </div>
+      </div>
+      <div class="legal-rate-grid" style="margin-top:12px">
+        <div class="form-group"><label class="form-label">Uang Harian / Orang / Hari</label><input class="form-control" id="legalDaily" type="number" min="0" step="1000"></div>
+        <div class="form-group"><label class="form-label">Penginapan / Orang / Malam</label><input class="form-control" id="legalHotel" type="number" min="0" step="1000"></div>
+        <div class="form-group"><label class="form-label">Transport / Orang</label><input class="form-control" id="legalTransport" type="number" min="0" step="1000"></div>
+        <div class="form-group"><label class="form-label">Biaya Lain / Orang</label><input class="form-control" id="legalOther" type="number" min="0" step="1000"></div>
+      </div>
+      <div class="form-hint" style="margin-top:9px">Catatan: aplikasi tidak mengarang nominal. Masukkan nominal sesuai tabel dasar hukum/standar biaya yang benar-benar digunakan oleh instansi.</div>
+    </div>
+  </div>
+
+  <div style="height:20px"></div>
+
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Tarif Biaya Cepat</div>
+        <div class="card-subtitle">Ringkasan tarif aktif dari dasar hukum yang dipilih.</div>
+      </div>
+      <button class="secondary-btn" onclick="saveCostRates()">Sinkronkan Tarif Aktif</button>
+    </div>
+    <div class="card-body">
+      <div class="rate-grid">
+        <div class="form-group">
+          <label class="form-label">Uang Harian / Hari</label>
+          <input class="form-control" id="rateDaily" type="number" min="0" step="1000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hotel / Malam</label>
+          <input class="form-control" id="rateHotel" type="number" min="0" step="1000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Transport</label>
+          <input class="form-control" id="rateTransport" type="number" min="0" step="1000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Biaya Lain</label>
+          <input class="form-control" id="rateOther" type="number" min="0" step="1000">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="height:20px"></div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Kalkulator Biaya Perjalanan</div>
+          <div class="card-subtitle">Pilih perjalanan atau isi komponen biaya.</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label class="form-label">Perjalanan</label>
+            <select class="form-control" id="costTripSelect" onchange="loadTripCost()"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Jumlah Hari</label>
+            <input class="form-control" id="costDays" type="number" min="1" value="1" oninput="calculateCost()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Malam Hotel</label>
+            <input class="form-control" id="costNights" type="number" min="0" value="0" oninput="calculateCost()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Transport Tambahan</label>
+            <input class="form-control" id="costTransport" type="number" min="0" value="0" oninput="calculateCost()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Biaya Lain Tambahan</label>
+            <input class="form-control" id="costOther" type="number" min="0" value="0" oninput="calculateCost()">
+          </div>
+        </div>
+
+        <div style="height:18px"></div>
+        <div class="cost-total" id="costTotal">Rp0</div>
+        <div class="cost-breakdown">
+          <div class="cost-item"><span>Uang Harian</span><strong id="costDailyTotal">Rp0</strong></div>
+          <div class="cost-item"><span>Hotel</span><strong id="costHotelTotal">Rp0</strong></div>
+          <div class="cost-item"><span>Transport</span><strong id="costTransportTotal">Rp0</strong></div>
+          <div class="cost-item"><span>Biaya Lain</span><strong id="costOtherTotal">Rp0</strong></div>
+        </div>
+
+        <div style="height:14px"></div>
+        <button class="primary-btn" onclick="saveTripCost()">Simpan Biaya ke Perjalanan</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Preview / Cetak Dokumen</div>
+          <div class="card-subtitle">Generate tampilan dokumen berdasarkan data perjalanan.</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label">Pilih Perjalanan</label>
+          <select class="form-control" id="documentTripSelect"></select>
+        </div>
+        <div style="height:10px"></div>
+        <div class="form-group">
+          <label class="form-label">Jenis Dokumen</label>
+          <select class="form-control" id="documentType">
+            <option value="surat-tugas">Surat Tugas</option>
+            <option value="spd">SPD / SPPD</option>
+            <option value="rincian-biaya">Rincian Biaya</option>
+            <option value="laporan">Laporan Perjalanan</option>
+          </select>
+        </div>
+        <div style="height:12px"></div>
+        <button class="secondary-btn" onclick="openDocumentPreview()">Preview Dokumen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
   </section>
 
 </main>
@@ -2696,15 +3106,25 @@ textarea.form-control{
       <div class="form-grid">
 
         <div class="form-group full">
-          <label class="form-label">
-            Pelaksana Perjalanan
-          </label>
+          <label class="form-label">Pelaksana Perjalanan (ASN dari Master Data)</label>
+          <div id="tripEmployeePicker" class="asn-picker"></div>
+          <span class="form-hint">Centang satu atau beberapa ASN yang ikut dalam perjalanan dinas.</span>
+        </div>
 
-          <select class="form-control" id="tripEmployee"></select>
+        <div class="form-group">
+          <label class="form-label">Jumlah Pegawai</label>
+          <input class="form-control" id="tripEmployeeCount" type="number" min="0" readonly value="0">
+        </div>
 
-          <span class="form-hint">
-            Pilih dari master pegawai yang tersedia.
-          </span>
+        <div class="form-group">
+          <label class="form-label">Anggaran Tersedia</label>
+          <input class="form-control" id="tripBudget" type="number" min="0" step="1000" value="0" oninput="updateTripCostPreview()">
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label">Dasar Hukum / Standar Biaya Perjadin</label>
+          <select class="form-control" id="tripLegalBasis" onchange="updateTripCostPreview()"></select>
+          <span class="form-hint">Tarif otomatis mengikuti master dasar hukum yang dipilih. Tarif dapat disesuaikan pada menu Biaya & Dokumen.</span>
         </div>
 
 
@@ -2810,6 +3230,36 @@ textarea.form-control{
 
       </div>
 
+      <div class="budget-box" style="margin-top:16px">
+        <div class="card-title">Rincian Biaya Otomatis</div>
+        <div class="card-subtitle">Perhitungan berdasarkan jumlah ASN, durasi, malam hotel, tarif, dan dasar hukum yang dipilih.</div>
+        <div class="legal-summary-grid">
+          <div class="legal-summary-item"><span>Uang Harian</span><strong id="tripPreviewDaily">Rp0</strong></div>
+          <div class="legal-summary-item"><span>Penginapan</span><strong id="tripPreviewHotel">Rp0</strong></div>
+          <div class="legal-summary-item"><span>Transportasi</span><strong id="tripPreviewTransport">Rp0</strong></div>
+        </div>
+        <div class="legal-summary-grid">
+          <div class="legal-summary-item"><span>Biaya Lain</span><strong id="tripPreviewOther">Rp0</strong></div>
+          <div class="legal-summary-item"><span>Total Perkiraan</span><strong id="tripPreviewTotal">Rp0</strong></div>
+          <div class="legal-summary-item"><span>Sisa Anggaran</span><strong id="tripPreviewBudgetStatus">Rp0</strong></div>
+        </div>
+      </div>
+
+      <div class="form-group full" style="margin-top:16px">
+        <label class="form-label">Geotag Lokasi</label>
+        <div class="geotag-box">
+          <div class="coords" id="tripGeoStatus">
+            Belum ada lokasi. Klik "Ambil Lokasi Browser" untuk menyimpan koordinat perjalanan.
+          </div>
+          <div class="mini-actions">
+            <button type="button" class="secondary-btn" onclick="captureTripLocation()">⌖ Ambil Lokasi Browser</button>
+            <button type="button" class="secondary-btn" onclick="clearTripLocation()">Hapus</button>
+          </div>
+        </div>
+        <input type="hidden" id="tripLatitude">
+        <input type="hidden" id="tripLongitude">
+        <span class="form-hint">Geotag menggunakan izin lokasi dari browser. Pada GitHub Pages, gunakan HTTPS.</span>
+      </div>
 
       <div
         id="conflictWarning"
@@ -2952,6 +3402,42 @@ textarea.form-control{
 </div>
 
 
+
+<!-- =====================================================
+     TRIP DETAIL MODAL
+===================================================== -->
+<div class="modal-backdrop" id="tripDetailModal">
+  <div class="modal" style="width:min(1050px,100%)">
+    <div class="modal-header">
+      <div class="modal-title" id="tripDetailTitle">Detail Perjalanan</div>
+      <button class="close-btn" onclick="closeModal('tripDetailModal')">×</button>
+    </div>
+    <div class="modal-body" id="tripDetailBody"></div>
+    <div class="modal-footer">
+      <button class="secondary-btn" onclick="closeModal('tripDetailModal')">Tutup</button>
+      <button class="primary-btn" onclick="openDocumentPreviewFromDetail()">Preview / Cetak</button>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================
+     DOCUMENT PREVIEW MODAL
+===================================================== -->
+<div class="modal-backdrop" id="documentPreviewModal">
+  <div class="modal" style="width:min(900px,100%)">
+    <div class="modal-header">
+      <div class="modal-title">Preview Dokumen</div>
+      <button class="close-btn" onclick="closeDocumentPreview()">×</button>
+    </div>
+    <div class="modal-body" id="documentPreviewBody"></div>
+    <div class="modal-footer">
+      <button class="secondary-btn" onclick="closeDocumentPreview()">Tutup</button>
+      <button class="primary-btn" onclick="printDocument()">🖨 Cetak Dokumen</button>
+    </div>
+  </div>
+</div>
+
+
 <!-- TOAST -->
 
 <div class="toast-container" id="toastContainer"></div>
@@ -3043,13 +3529,111 @@ if(!data){
       institution:"Pemerintah Kabupaten Malaka",
       unit:"Dinas / Badan / OPD",
       year:"2026",
-      address:"Kabupaten Malaka, Nusa Tenggara Timur"
+      address:"Kabupaten Malaka, Nusa Tenggara Timur",
+      legalBases:[
+        {id:"pmk119-2023",name:"PMK 119 Tahun 2023 — Perjalanan Dinas Dalam Negeri",daily:0,hotel:0,transport:0,other:0},
+        {id:"pmk54-2026",name:"PMK 54 Tahun 2026 — Standar Biaya Masukan",daily:0,hotel:0,transport:0,other:0},
+        {id:"pemda-custom",name:"Standar Biaya Pemda / Peraturan Daerah atau Perbup (isi manual)",daily:0,hotel:0,transport:0,other:0}
+      ]
     }
 
   };
 
   saveData();
 }
+
+/* =====================================================
+   NORMALISASI DATA FITUR
+===================================================== */
+const DEFAULT_COST_RATES = {
+  daily: 0,
+  hotel: 0,
+  transport: 0,
+  other: 0
+};
+
+const DEFAULT_DOCUMENTS = [
+  {key:"suratTugas", name:"Surat Tugas"},
+  {key:"spd", name:"SPD / SPPD"},
+  {key:"transport", name:"Tiket / Bukti Transportasi"},
+  {key:"hotel", name:"Bukti Hotel"},
+  {key:"daily", name:"Bukti Uang Harian"},
+  {key:"report", name:"Laporan Perjalanan"},
+  {key:"receipt", name:"Kwitansi / Bukti Pengeluaran"}
+];
+
+function normalizeFeatureData(){
+  if(!data.settings) data.settings = {};
+  data.settings.costRates = {
+    ...DEFAULT_COST_RATES,
+    ...(data.settings.costRates || {})
+  };
+  const defaultLegalBases = [
+    {id:"pmk119-2023",name:"PMK 119 Tahun 2023 — Perjalanan Dinas Dalam Negeri",daily:0,hotel:0,transport:0,other:0},
+    {id:"pmk54-2026",name:"PMK 54 Tahun 2026 — Standar Biaya Masukan",daily:0,hotel:0,transport:0,other:0},
+    {id:"pemda-custom",name:"Standar Biaya Pemda / Peraturan Daerah atau Perbup (isi manual)",daily:0,hotel:0,transport:0,other:0}
+  ];
+  if(!Array.isArray(data.settings.legalBases) || !data.settings.legalBases.length){
+    data.settings.legalBases = defaultLegalBases;
+  } else {
+    data.settings.legalBases = data.settings.legalBases.map((b,i)=>({
+      ...(defaultLegalBases[i]||{}), ...b,
+      daily:Number(b.daily)||0, hotel:Number(b.hotel)||0, transport:Number(b.transport)||0, other:Number(b.other)||0
+    }));
+  }
+
+  (data.trips || []).forEach(t => {
+    if(!Array.isArray(t.statusHistory) || !t.statusHistory.length){
+      t.statusHistory = [{
+        status:t.status || "Draft",
+        at:new Date().toISOString()
+      }];
+    }
+    if(!t.documents || typeof t.documents !== "object") t.documents = {};
+    DEFAULT_DOCUMENTS.forEach(d => {
+      if(typeof t.documents[d.key] !== "boolean") t.documents[d.key] = false;
+    });
+    if(!t.cost || typeof t.cost !== "object"){
+      t.cost = {
+        days:Number(t.duration || 1),
+        nights:0,
+        transport:0,
+        other:0,
+        dailyTotal:0,
+        hotelTotal:0,
+        transportTotal:0,
+        otherTotal:0,
+        total:0
+      };
+    }
+    if(!Array.isArray(t.employeeIds)) t.employeeIds = [];
+    if(t.employeeIds.length && data.employees.length){
+      t.employeeIds = t.employeeIds.map(v=>{
+        const byId=data.employees.find(e=>String(e.id)===String(v));
+        const byName=data.employees.find(e=>e.name===v);
+        return String((byId||byName||{}).id || v);
+      });
+    }
+    if(!t.employeeIds.length && t.employee){
+      const legacy=data.employees.find(e=>e.name===t.employee);
+      t.employeeIds=legacy?[String(legacy.id)]:[String(t.employee)];
+    }
+    if(!Array.isArray(t.employees) || !t.employees.length){
+      t.employees=t.employeeIds.map(id=>data.employees.find(e=>String(e.id)===String(id))?.name).filter(Boolean);
+      if(!t.employees.length && t.employee) t.employees=[t.employee];
+    }
+    if(!t.employeeCount) t.employeeCount=t.employees.length || 1;
+    if(t.budget === undefined) t.budget = 0;
+    if(!t.legalBasisId) t.legalBasisId = data.settings.legalBases[0]?.id || "";
+    if(!t.legalBasisName) t.legalBasisName = data.settings.legalBases.find(b=>b.id===t.legalBasisId)?.name || "";
+    if(t.latitude === undefined) t.latitude = "";
+    if(t.longitude === undefined) t.longitude = "";
+    if(t.geotagAt === undefined) t.geotagAt = "";
+  });
+}
+
+normalizeFeatureData();
+saveData();
 
 
 /* =====================================================
@@ -3102,6 +3686,21 @@ const titles = {
     "Pantau status perjalanan dinas"
   ],
 
+  status:[
+    "Alur Status",
+    "Tahapan status perjalanan dinas"
+  ],
+
+  geotagging:[
+    "Geotagging",
+    "Koordinat lokasi dari browser"
+  ],
+
+  biaya:[
+    "Biaya & Dokumen",
+    "Kalkulator biaya dan preview dokumen"
+  ],
+
   laporan:[
     "Laporan",
     "Rekapitulasi perjalanan dinas"
@@ -3147,6 +3746,16 @@ function switchView(view){
   if(view==="pegawai") renderEmployees();
 
   if(view==="monitoring") renderMonitoring();
+
+  if(view==="status") renderStatusFlow();
+
+  if(view==="geotagging") renderGeotags();
+
+  if(view==="biaya"){
+    loadCostRates();
+    populateFeatureTripSelects();
+    calculateCost();
+  }
 
   if(view==="laporan") renderReports();
 
@@ -3656,52 +4265,79 @@ function deleteEmployee(id){
 ===================================================== */
 
 function openQuickTrip(){
-
   updateEmployeeSelect();
-
-  document
-    .getElementById("tripModal")
-    .classList.add("show");
-
-  const today =
-    new Date()
-    .toISOString()
-    .split("T")[0];
-
-  document.getElementById("tripStart").value =
-    today;
-
-  document.getElementById("tripEnd").value =
-    today;
-
+  populateLegalBasisSelect("tripLegalBasis");
+  document.getElementById("tripModal").classList.add("show");
+  const today=new Date().toISOString().split("T")[0];
+  document.getElementById("tripStart").value=today;
+  document.getElementById("tripEnd").value=today;
+  document.getElementById("tripPurpose").value="";
+  document.getElementById("tripDestination").value="";
+  document.getElementById("tripNotes").value="";
+  document.getElementById("tripBudget").value=0;
+  document.getElementById("tripEmployeeCount").value=0;
+  document.querySelectorAll("#tripEmployeePicker input[type=checkbox]").forEach(c=>c.checked=false);
+  document.getElementById("tripLegalBasis").selectedIndex=0;
   calculateTripDuration();
-
+  clearTripLocation();
+  updateTripCostPreview();
 }
 
-
-function closeModal(id){
-
-  document
-    .getElementById(id)
-    .classList.remove("show");
-
-}
-
+function closeModal(id){ document.getElementById(id).classList.remove("show"); }
 
 function updateEmployeeSelect(){
-
-  const select =
-    document.getElementById("tripEmployee");
-
-  select.innerHTML =
-    data.employees.map(e => `
-      <option value="${escapeHTML(e.name)}">
-        ${escapeHTML(e.name)}
-      </option>
-    `).join("");
-
+  const container=document.getElementById("tripEmployeePicker");
+  if(!container) return;
+  container.innerHTML=data.employees.length ? data.employees.map(e=>`
+    <label class="asn-option">
+      <input type="checkbox" value="${escapeHTML(String(e.id))}" onchange="onTripEmployeesChange()">
+      <span><strong>${escapeHTML(e.name)}</strong><small>${escapeHTML(e.nip||"")} · ${escapeHTML(e.position||"")} · ${escapeHTML(e.unit||"")}</small></span>
+    </label>`).join("") : `<div class="empty"><strong>Belum ada ASN</strong><p>Tambahkan ASN pada Master Data ASN.</p></div>`;
 }
 
+function getSelectedTripEmployees(){
+  const ids=[...document.querySelectorAll("#tripEmployeePicker input[type=checkbox]:checked")].map(x=>String(x.value));
+  return data.employees.filter(e=>ids.includes(String(e.id)));
+}
+
+function onTripEmployeesChange(){
+  const employees=getSelectedTripEmployees();
+  document.getElementById("tripEmployeeCount").value=employees.length;
+  checkConflict();
+  updateTripCostPreview();
+}
+
+function populateLegalBasisSelect(targetId){
+  const select=document.getElementById(targetId);
+  if(!select) return;
+  const bases=data.settings.legalBases||[];
+  select.innerHTML=bases.map(b=>`<option value="${escapeHTML(b.id)}">${escapeHTML(b.name)}</option>`).join("") || `<option value="">Belum ada dasar hukum</option>`;
+}
+
+function getSelectedLegalBasis(){
+  const id=document.getElementById("tripLegalBasis")?.value;
+  return (data.settings.legalBases||[]).find(b=>b.id===id) || (data.settings.legalBases||[])[0] || {id:"",name:"",daily:0,hotel:0,transport:0,other:0};
+}
+
+function updateTripCostPreview(){
+  const employees=getSelectedTripEmployees();
+  const count=employees.length;
+  const days=Math.max(1,Number(document.getElementById("tripDuration")?.value?.match(/\d+/)?.[0])||1);
+  const nights=Math.max(0,days-1);
+  const basis=getSelectedLegalBasis();
+  const daily=count*days*Number(basis.daily||0);
+  const hotel=count*nights*Number(basis.hotel||0);
+  const transport=count*Number(basis.transport||0);
+  const other=count*Number(basis.other||0);
+  const total=daily+hotel+transport+other;
+  const budget=Math.max(0,Number(document.getElementById("tripBudget")?.value)||0);
+  const remaining=budget-total;
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=formatRupiah(v)};
+  set("tripPreviewDaily",daily);set("tripPreviewHotel",hotel);set("tripPreviewTransport",transport);set("tripPreviewOther",other);set("tripPreviewTotal",total);
+  const st=document.getElementById("tripPreviewBudgetStatus");
+  if(st){st.textContent=formatRupiah(remaining);st.className=remaining<0?"budget-over":"budget-ok";}
+  return {days,nights,employeeCount:count,dailyTotal:daily,hotelTotal:hotel,transportTotal:transport,otherTotal:other,total,budget,remaining};
+}
 
 /* =====================================================
    DURATION
@@ -3751,6 +4387,7 @@ function calculateTripDuration(){
 
 
   checkConflict();
+  updateTripCostPreview();
 
 }
 
@@ -3760,172 +4397,68 @@ function calculateTripDuration(){
 ===================================================== */
 
 function checkConflict(){
-
-  const employee =
-    document.getElementById("tripEmployee").value;
-
-  const start =
-    document.getElementById("tripStart").value;
-
-  const end =
-    document.getElementById("tripEnd").value;
-
-
-  if(!employee || !start || !end){
-
-    document.getElementById("conflictWarning")
-      .style.display="none";
-
+  const employees=getSelectedTripEmployees();
+  const start=document.getElementById("tripStart").value;
+  const end=document.getElementById("tripEnd").value;
+  if(!employees.length || !start || !end){
+    document.getElementById("conflictWarning").style.display="none";
     return;
-
   }
-
-
-  const conflict =
-    data.trips.some(t => {
-
-      if(t.employee !== employee)
-        return false;
-
-      return (
-        new Date(start) <= new Date(t.end) &&
-        new Date(end) >= new Date(t.start)
-      );
-
+  const names=[];
+  employees.forEach(e=>{
+    const conflict=data.trips.some(t=>{
+      const people=Array.isArray(t.employeeIds)&&t.employeeIds.length ? t.employeeIds.map(String) : [String(t.employee||"")];
+      const same=people.includes(String(e.id)) || t.employee===e.name;
+      return same && new Date(start)<=new Date(t.end) && new Date(end)>=new Date(t.start);
     });
-
-
-  document.getElementById("conflictWarning")
-    .style.display =
-      conflict ? "block" : "none";
-
+    if(conflict) names.push(e.name);
+  });
+  const box=document.getElementById("conflictWarning");
+  box.style.display=names.length?"block":"none";
+  if(names.length) box.innerHTML=`⚠ Benturan jadwal terdeteksi untuk: <strong>${escapeHTML(names.join(", "))}</strong>. Periksa kalender sebelum menyimpan.`;
 }
 
-
-document
-  .getElementById("tripEmployee")
-  .addEventListener("change", checkConflict);
-
+document.getElementById("tripStart").addEventListener("change",checkConflict);
+document.getElementById("tripEnd").addEventListener("change",checkConflict);
 
 /* =====================================================
    SAVE TRIP
 ===================================================== */
 
 function saveTrip(){
-
-  const employee =
-    document.getElementById("tripEmployee").value;
-
-  const purpose =
-    document.getElementById("tripPurpose").value.trim();
-
-  const destination =
-    document.getElementById("tripDestination").value.trim();
-
-  const start =
-    document.getElementById("tripStart").value;
-
-  const end =
-    document.getElementById("tripEnd").value;
-
-  const status =
-    document.getElementById("tripStatus").value;
-
-  const notes =
-    document.getElementById("tripNotes").value.trim();
-
-
-  if(
-    !employee ||
-    !purpose ||
-    !destination ||
-    !start ||
-    !end
-  ){
-
-    showToast(
-      "Data belum lengkap",
-      "Lengkapi pelaksana, kegiatan, tujuan, dan tanggal."
-    );
-
-    return;
-
+  const employees=getSelectedTripEmployees();
+  const purpose=document.getElementById("tripPurpose").value.trim();
+  const destination=document.getElementById("tripDestination").value.trim();
+  const start=document.getElementById("tripStart").value;
+  const end=document.getElementById("tripEnd").value;
+  const status=document.getElementById("tripStatus").value;
+  const notes=document.getElementById("tripNotes").value.trim();
+  const budget=Math.max(0,Number(document.getElementById("tripBudget").value)||0);
+  const basis=getSelectedLegalBasis();
+  if(!employees.length || !purpose || !destination || !start || !end){
+    showToast("Data belum lengkap","Pilih ASN, lalu lengkapi kegiatan, tujuan, dan tanggal."); return;
   }
-
-
   if(new Date(end)<new Date(start)){
-
-    showToast(
-      "Tanggal tidak valid",
-      "Tanggal kembali tidak boleh sebelum tanggal berangkat."
-    );
-
-    return;
-
+    showToast("Tanggal tidak valid","Tanggal kembali tidak boleh sebelum tanggal berangkat."); return;
   }
-
-
-  const duration =
-    Math.round(
-      (
-        new Date(end) -
-        new Date(start)
-      ) /
-      (1000*60*60*24)
-    ) + 1;
-
-
-  const number =
-    generateTripNumber();
-
-
+  const duration=Math.round((new Date(end)-new Date(start))/(1000*60*60*24))+1;
+  const number=generateTripNumber();
+  const preview=updateTripCostPreview();
+  const employeeNames=employees.map(e=>e.name);
   data.trips.push({
-
-    id:Date.now(),
-
-    number,
-
-    employee,
-
-    purpose,
-
-    destination,
-
-    start,
-
-    end,
-
-    duration,
-
-    status,
-
-    notes
-
+    id:Date.now(),number,employee:employeeNames[0],employees:employeeNames,employeeIds:employees.map(e=>String(e.id)),employeeCount:employees.length,
+    purpose,destination,start,end,duration,status,notes,budget,
+    legalBasisId:basis.id,legalBasisName:basis.name,
+    latitude:document.getElementById("tripLatitude").value||"",
+    longitude:document.getElementById("tripLongitude").value||"",
+    geotagAt:(document.getElementById("tripLatitude").value||document.getElementById("tripLongitude").value)?new Date().toISOString():"",
+    statusHistory:[{status,at:new Date().toISOString()}],
+    documents:Object.fromEntries(DEFAULT_DOCUMENTS.map(d=>[d.key,false])),
+    cost:{days:duration,nights:preview.nights,transport:0,other:0,dailyTotal:preview.dailyTotal,hotelTotal:preview.hotelTotal,transportTotal:preview.transportTotal,otherTotal:preview.otherTotal,total:preview.total,budget,remaining:preview.remaining,legalBasisId:basis.id,legalBasisName:basis.name}
   });
-
-
-  saveData();
-
-  closeModal("tripModal");
-
-  updateDashboard();
-
-  renderTrips();
-
-  renderCalendar("calendar");
-
-  showToast(
-    "Perjalanan berhasil dibuat",
-    `${number} berhasil ditambahkan.`
-  );
-
-
-  document.getElementById("tripPurpose").value="";
-  document.getElementById("tripDestination").value="";
-  document.getElementById("tripNotes").value="";
-
+  saveData(); closeModal("tripModal"); updateDashboard(); renderTrips(); renderCalendar("calendar"); populateFeatureTripSelects();
+  showToast("Perjalanan berhasil dibuat",`${number} — ${employees.length} ASN, total ${formatRupiah(preview.total)}.`);
 }
-
 
 /* =====================================================
    NUMBER
@@ -3951,18 +4484,7 @@ function generateTripNumber(){
 ===================================================== */
 
 function viewTrip(id){
-
-  const trip =
-    data.trips.find(t => t.id===id);
-
-  if(!trip) return;
-
-
-  showToast(
-    trip.number,
-    `${trip.employee} • ${trip.destination} • ${trip.duration} hari`
-  );
-
+  openTripDetail(id);
 }
 
 
@@ -4631,8 +5153,8 @@ function importEmployee(event){
 
 
     const lines =
-      text.split(/\r?\n/)
-      .filter(x => x.trim());
+      parseCSV(text)
+      .filter(row => row.some(cell => String(cell).trim()));
 
 
     if(lines.length < 2){
@@ -4653,11 +5175,7 @@ function importEmployee(event){
     for(let i=1;i<lines.length;i++){
 
       const parts =
-        lines[i]
-        .split(",")
-        .map(x =>
-          x.replace(/^"|"$/g,"").trim()
-        );
+        lines[i].map(x => String(x).trim());
 
 
       if(!parts[0]) continue;
@@ -4713,6 +5231,501 @@ function importEmployee(event){
 
 }
 
+
+
+/* =====================================================
+   FITUR TAMBAHAN: STATUS
+===================================================== */
+const STATUS_FLOW = [
+  "Draft",
+  "Menunggu Persetujuan",
+  "Disetujui",
+  "Akan Berangkat",
+  "Berjalan",
+  "Perlu SPJ/Laporan",
+  "Selesai"
+];
+
+function statusIndex(status){
+  const i = STATUS_FLOW.indexOf(status);
+  return i < 0 ? 0 : i;
+}
+
+function renderStatusFlow(){
+  const container = document.getElementById("statusFlowList");
+  if(!container) return;
+
+  if(!data.trips.length){
+    container.innerHTML = `<div class="empty"><div class="empty-icon">⇄</div><strong>Belum ada perjalanan</strong><p>Buat perjalanan untuk melihat alur status.</p></div>`;
+    return;
+  }
+
+  container.innerHTML = data.trips.map(t => {
+    const idx = statusIndex(t.status);
+    const next = STATUS_FLOW[idx + 1];
+    return `
+      <div class="card" style="margin-bottom:14px;box-shadow:none">
+        <div class="card-header">
+          <div>
+            <div class="card-title">${escapeHTML(t.number)} — ${escapeHTML(t.employee)}</div>
+            <div class="card-subtitle">${escapeHTML(t.destination)} • ${formatDate(t.start)} s.d. ${formatDate(t.end)}</div>
+          </div>
+          <div class="mini-actions">
+            ${next ? `<button class="primary-btn" onclick="advanceTripStatus(${t.id})">Lanjut: ${escapeHTML(next)}</button>` : `<span class="badge">Status akhir</span>`}
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="status-flow">
+            ${STATUS_FLOW.map((s,i) => `
+              <div class="status-step ${i<idx?'done':''} ${i===idx?'current':''}">
+                <div class="step-dot">${i<idx?'✓':i+1}</div>
+                <span>${escapeHTML(s)}</span>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function advanceTripStatus(id){
+  const trip = data.trips.find(t => t.id === id);
+  if(!trip) return;
+  const idx = statusIndex(trip.status);
+  if(idx >= STATUS_FLOW.length-1){
+    showToast("Status sudah selesai","Perjalanan ini sudah berada pada status akhir.");
+    return;
+  }
+  const next = STATUS_FLOW[idx+1];
+  if(!confirm(`Ubah status ${trip.number} menjadi "${next}"?`)) return;
+  trip.status = next;
+  if(!Array.isArray(trip.statusHistory)) trip.statusHistory=[];
+  trip.statusHistory.push({status:next, at:new Date().toISOString()});
+  saveData();
+  updateDashboard();
+  renderStatusFlow();
+  renderMonitoring();
+  renderTrips();
+  showToast("Status diperbarui",`${trip.number} → ${next}`);
+}
+
+
+/* =====================================================
+   FITUR TAMBAHAN: GEOTAGGING
+===================================================== */
+function setGeoStatus(elementId, message){
+  const el = document.getElementById(elementId);
+  if(el) el.innerHTML = message;
+}
+
+function captureTripLocation(){
+  if(!navigator.geolocation){
+    showToast("Geotag tidak tersedia","Browser ini tidak mendukung geolocation.");
+    return;
+  }
+  setGeoStatus("tripGeoStatus","Mengambil lokasi dari browser…");
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const lat = pos.coords.latitude.toFixed(7);
+      const lng = pos.coords.longitude.toFixed(7);
+      document.getElementById("tripLatitude").value = lat;
+      document.getElementById("tripLongitude").value = lng;
+      setGeoStatus("tripGeoStatus",
+        `Latitude: <strong>${lat}</strong><br>Longitude: <strong>${lng}</strong><br><span>Lokasi berhasil diambil dari browser.</span>`
+      );
+      showToast("Geotag tersimpan sementara","Koordinat akan disimpan saat perjalanan disimpan.");
+    },
+    err => {
+      const msg = err.code===1 ? "Izin lokasi ditolak." : err.code===2 ? "Lokasi tidak tersedia." : "Pengambilan lokasi melebihi batas waktu.";
+      setGeoStatus("tripGeoStatus", msg);
+      showToast("Geotag gagal",msg);
+    },
+    {enableHighAccuracy:true, timeout:15000, maximumAge:60000}
+  );
+}
+
+function clearTripLocation(){
+  const lat = document.getElementById("tripLatitude");
+  const lng = document.getElementById("tripLongitude");
+  if(lat) lat.value="";
+  if(lng) lng.value="";
+  setGeoStatus("tripGeoStatus","Belum ada lokasi. Klik \"Ambil Lokasi Browser\" untuk menyimpan koordinat perjalanan.");
+}
+
+function captureCurrentGeotag(){
+  if(!navigator.geolocation){
+    showToast("Geotag tidak tersedia","Browser ini tidak mendukung geolocation.");
+    return;
+  }
+  setGeoStatus("currentGeoStatus","Mengambil lokasi…");
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const lat = pos.coords.latitude.toFixed(7);
+      const lng = pos.coords.longitude.toFixed(7);
+      const mapUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+      setGeoStatus("currentGeoStatus",
+        `Latitude: <strong>${lat}</strong><br>Longitude: <strong>${lng}</strong><br><a href="${mapUrl}" target="_blank" rel="noopener" class="badge">Buka di Google Maps</a>`
+      );
+      showToast("Lokasi berhasil diambil",`${lat}, ${lng}`);
+    },
+    err => {
+      const msg = err.code===1 ? "Izin lokasi ditolak." : err.code===2 ? "Lokasi tidak tersedia." : "Pengambilan lokasi melebihi batas waktu.";
+      setGeoStatus("currentGeoStatus",msg);
+      showToast("Geotag gagal",msg);
+    },
+    {enableHighAccuracy:true, timeout:15000, maximumAge:60000}
+  );
+}
+
+function renderGeotags(){
+  const tbody = document.getElementById("geotagTable");
+  if(!tbody) return;
+  const rows = data.trips.filter(t => t.latitude && t.longitude);
+  if(!rows.length){
+    tbody.innerHTML = `<tr><td colspan="4"><div class="empty"><div class="empty-icon">⌖</div><strong>Belum ada geotag</strong><p>Ambil lokasi saat membuat perjalanan baru.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(t => {
+    const mapUrl = `https://www.google.com/maps?q=${encodeURIComponent(t.latitude+","+t.longitude)}`;
+    return `
+      <tr>
+        <td><strong>${escapeHTML(t.number)}</strong></td>
+        <td>${escapeHTML(t.employee)}</td>
+        <td class="coords">${escapeHTML(t.latitude)}, ${escapeHTML(t.longitude)}</td>
+        <td><a class="action-btn" href="${mapUrl}" target="_blank" rel="noopener">Peta</a></td>
+      </tr>
+    `;
+  }).join("");
+}
+
+
+/* =====================================================
+   FITUR TAMBAHAN: CHECKLIST DOKUMEN
+===================================================== */
+function renderTripChecklist(trip){
+  const container = document.getElementById("tripChecklist");
+  if(!container) return;
+  container.innerHTML = DEFAULT_DOCUMENTS.map(item => `
+    <label class="check-toggle">
+      <input type="checkbox" ${trip.documents?.[item.key] ? "checked" : ""} onchange="toggleTripDocument(${trip.id},'${item.key}',this.checked)">
+      <span>${escapeHTML(item.name)}</span>
+    </label>
+  `).join("");
+}
+
+function toggleTripDocument(id,key,value){
+  const trip = data.trips.find(t=>t.id===id);
+  if(!trip) return;
+  if(!trip.documents) trip.documents={};
+  trip.documents[key]=value;
+  saveData();
+  updateDashboard();
+  showToast("Checklist diperbarui",value ? "Dokumen ditandai lengkap." : "Dokumen ditandai belum lengkap.");
+}
+
+
+/* =====================================================
+   FITUR TAMBAHAN: BIAYA
+===================================================== */
+function formatRupiah(value){
+  return new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(value)||0);
+}
+
+function loadCostRates(){
+  const r=data.settings.costRates||DEFAULT_COST_RATES;
+  document.getElementById("rateDaily").value=r.daily;
+  document.getElementById("rateHotel").value=r.hotel;
+  document.getElementById("rateTransport").value=r.transport;
+  document.getElementById("rateOther").value=r.other;
+  populateLegalBasisEditor();
+}
+
+function populateLegalBasisEditor(){
+  const select=document.getElementById("legalBasisEditor");
+  if(!select) return;
+  select.innerHTML=(data.settings.legalBases||[]).map(b=>`<option value="${escapeHTML(b.id)}">${escapeHTML(b.name)}</option>`).join("");
+  loadLegalBasisEditor();
+}
+
+function loadLegalBasisEditor(){
+  const id=document.getElementById("legalBasisEditor")?.value;
+  const b=(data.settings.legalBases||[]).find(x=>x.id===id);
+  if(!b) return;
+  document.getElementById("legalDaily").value=b.daily||0;
+  document.getElementById("legalHotel").value=b.hotel||0;
+  document.getElementById("legalTransport").value=b.transport||0;
+  document.getElementById("legalOther").value=b.other||0;
+}
+
+function saveLegalBasisRates(){
+  const id=document.getElementById("legalBasisEditor")?.value;
+  const b=(data.settings.legalBases||[]).find(x=>x.id===id);
+  if(!b) return;
+  b.daily=Number(document.getElementById("legalDaily").value)||0;
+  b.hotel=Number(document.getElementById("legalHotel").value)||0;
+  b.transport=Number(document.getElementById("legalTransport").value)||0;
+  b.other=Number(document.getElementById("legalOther").value)||0;
+  data.settings.costRates={daily:b.daily,hotel:b.hotel,transport:b.transport,other:b.other};
+  saveData();
+  showToast("Master tarif disimpan",`${b.name} siap dipakai dalam pembuatan perjalanan.`);
+}
+
+function saveCostRates(){
+  data.settings.costRates={daily:Number(document.getElementById("rateDaily").value)||0,hotel:Number(document.getElementById("rateHotel").value)||0,transport:Number(document.getElementById("rateTransport").value)||0,other:Number(document.getElementById("rateOther").value)||0};
+  const activeId=document.getElementById("legalBasisEditor")?.value;
+  const b=(data.settings.legalBases||[]).find(x=>x.id===activeId);
+  if(b){b.daily=data.settings.costRates.daily;b.hotel=data.settings.costRates.hotel;b.transport=data.settings.costRates.transport;b.other=data.settings.costRates.other;}
+  saveData(); calculateCost(); showToast("Tarif disimpan","Tarif aktif berhasil diperbarui.");
+}
+
+function populateFeatureTripSelects(){
+  const cost=document.getElementById("costTripSelect"),doc=document.getElementById("documentTripSelect");
+  if(!cost||!doc) return;
+  const options=data.trips.length?`<option value="">-- Pilih perjalanan --</option>`+data.trips.map(t=>`<option value="${t.id}">${escapeHTML(t.number)} — ${escapeHTML(t.employee)}${t.employeeCount>1?` + ${t.employeeCount-1} ASN`:""} — ${escapeHTML(t.destination)}</option>`).join(""):`<option value="">Belum ada perjalanan</option>`;
+  cost.innerHTML=options;doc.innerHTML=options;
+}
+
+function loadTripCost(){
+  const id=Number(document.getElementById("costTripSelect").value),trip=data.trips.find(t=>t.id===id);
+  if(!trip){document.getElementById("costDays").value=1;document.getElementById("costNights").value=0;document.getElementById("costTransport").value=0;document.getElementById("costOther").value=0;calculateCost();return;}
+  const c=trip.cost||{}; document.getElementById("costDays").value=c.days||trip.duration||1;document.getElementById("costNights").value=c.nights??Math.max(0,(trip.duration||1)-1);document.getElementById("costTransport").value=c.transport||0;document.getElementById("costOther").value=c.other||0;calculateCost();
+}
+
+function calculateCost(){
+  const id=Number(document.getElementById("costTripSelect")?.value),trip=data.trips.find(t=>t.id===id);
+  const basis=trip?.legalBasisId?(data.settings.legalBases||[]).find(b=>b.id===trip.legalBasisId):null;
+  const rates=basis||data.settings.costRates||DEFAULT_COST_RATES;
+  const people=Math.max(1,Number(trip?.employeeCount||1));
+  const days=Math.max(1,Number(document.getElementById("costDays")?.value)||1);
+  const nights=Math.max(0,Number(document.getElementById("costNights")?.value)||0);
+  const transportExtra=Math.max(0,Number(document.getElementById("costTransport")?.value)||0);
+  const otherExtra=Math.max(0,Number(document.getElementById("costOther")?.value)||0);
+  const daily=days*people*Number(rates.daily||0);
+  const hotel=nights*people*Number(rates.hotel||0);
+  const transport=people*Number(rates.transport||0)+transportExtra;
+  const other=people*Number(rates.other||0)+otherExtra;
+  const total=daily+hotel+transport+other;
+  const set=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=formatRupiah(val)};
+  set("costDailyTotal",daily);set("costHotelTotal",hotel);set("costTransportTotal",transport);set("costOtherTotal",other);set("costTotal",total);
+  return {days,nights,employeeCount:people,transport:transportExtra,other:otherExtra,dailyTotal:daily,hotelTotal:hotel,transportTotal:transport,otherTotal:other,total,budget:trip?.budget||0,remaining:(trip?.budget||0)-total,legalBasisId:trip?.legalBasisId||basis?.id||"",legalBasisName:trip?.legalBasisName||basis?.name||""};
+}
+
+function saveTripCost(){
+  const id=Number(document.getElementById("costTripSelect").value),trip=data.trips.find(t=>t.id===id);
+  if(!trip){showToast("Pilih perjalanan","Pilih perjalanan yang akan diberi rincian biaya.");return;}
+  trip.cost=calculateCost(); saveData(); updateDashboard(); showToast("Biaya disimpan",`${trip.number}: ${formatRupiah(trip.cost.total)}`);
+}
+
+/* =====================================================
+   FITUR TAMBAHAN: PREVIEW / CETAK DOKUMEN
+===================================================== */
+function openDocumentPreview(){
+  const id=Number(document.getElementById("documentTripSelect").value);
+  const type=document.getElementById("documentType").value;
+  const trip=data.trips.find(t=>t.id===id);
+  if(!trip){
+    showToast("Pilih perjalanan","Pilih perjalanan terlebih dahulu.");
+    return;
+  }
+  renderDocumentPreview(trip,type);
+  document.getElementById("documentPreviewModal").classList.add("show");
+}
+
+function renderDocumentPreview(trip,type){
+  const institution=escapeHTML(data.settings.institution||"Pemerintah Kabupaten");
+  const unit=escapeHTML(data.settings.unit||"Unit Kerja");
+  const address=escapeHTML(data.settings.address||"");
+  const cost=trip.cost||{};
+  const people=Array.isArray(trip.employeeIds)&&trip.employeeIds.length ? data.employees.filter(e=>trip.employeeIds.map(String).includes(String(e.id))) : (Array.isArray(trip.employees)&&trip.employees.length ? trip.employees.map((name,i)=>({name,nip:"",position:"",rank:"",unit:""})) : [{name:trip.employee,nip:"",position:"",rank:"",unit:""}]);
+  const peopleRows=people.map((p,i)=>`<tr><td>${i+1}</td><td>${escapeHTML(p.name||"")}</td><td>${escapeHTML(p.nip||"")}</td><td>${escapeHTML(p.position||"")}</td><td>${escapeHTML(p.unit||"")}</td></tr>`).join("");
+  const peopleNames=people.map(p=>p.name).join(", ");
+  let title="",body="";
+
+  if(type==="surat-tugas"){
+    title="SURAT TUGAS";
+    body=`
+      <p style="text-align:center;font-size:12px">Nomor: ${escapeHTML(trip.number)}</p>
+      <p style="margin-top:20px;font-size:12px;line-height:1.7">Yang bertanda tangan di bawah ini menugaskan:</p>
+      <table>
+        <tr><td width="150">Pelaksana</td><td>: ${escapeHTML(peopleNames)}</td></tr>
+        <tr><td>Kegiatan</td><td>: ${escapeHTML(trip.purpose)}</td></tr>
+        <tr><td>Tujuan</td><td>: ${escapeHTML(trip.destination)}</td></tr>
+        <tr><td>Waktu</td><td>: ${formatDate(trip.start)} s.d. ${formatDate(trip.end)}</td></tr>
+      </table>
+      <p style="margin-top:20px;font-size:12px;line-height:1.7">Demikian surat tugas ini dibuat untuk dilaksanakan dengan penuh tanggung jawab.</p>`;
+  } else if(type==="spd"){
+    title="SURAT PERJALANAN DINAS";
+    body=`
+      <table>
+        <tr><td width="180">Nomor Perjalanan</td><td>: ${escapeHTML(trip.number)}</td></tr>
+        <tr><td>Jumlah Pelaksana</td><td>: ${people.length} orang</td></tr>
+        <tr><td>Maksud Perjalanan</td><td>: ${escapeHTML(trip.purpose)}</td></tr>
+        <tr><td>Tempat Tujuan</td><td>: ${escapeHTML(trip.destination)}</td></tr>
+        <tr><td>Tanggal Berangkat</td><td>: ${formatDate(trip.start)}</td></tr>
+        <tr><td>Tanggal Kembali</td><td>: ${formatDate(trip.end)}</td></tr>
+        <tr><td>Lama Perjalanan</td><td>: ${trip.duration} hari</td></tr>
+        <tr><td>Dasar Hukum / Standar Biaya</td><td>: ${escapeHTML(trip.legalBasisName||"-")}</td></tr>
+        <tr><td>Anggaran Tersedia</td><td>: ${formatRupiah(trip.budget||0)}</td></tr>
+        <tr><td>Total Perkiraan Biaya</td><td>: ${formatRupiah(cost.total||0)}</td></tr>
+      </table>
+      <p style="margin-top:18px;font-size:12px;font-weight:700">Daftar Pelaksana</p>
+      <table><thead><tr><th>No</th><th>Nama</th><th>NIP</th><th>Jabatan</th><th>Unit Kerja</th></tr></thead><tbody>${peopleRows}</tbody></table>
+      <p style="margin-top:18px;font-size:12px;font-weight:700">Rincian Perkiraan Biaya</p>
+      <table>
+        <tr><td>Uang Harian</td><td>: ${formatRupiah(cost.dailyTotal||0)}</td></tr>
+        <tr><td>Penginapan</td><td>: ${formatRupiah(cost.hotelTotal||0)}</td></tr>
+        <tr><td>Transportasi</td><td>: ${formatRupiah(cost.transportTotal||0)}</td></tr>
+        <tr><td>Biaya Lain</td><td>: ${formatRupiah(cost.otherTotal||0)}</td></tr>
+        <tr><td><strong>Total</strong></td><td><strong>: ${formatRupiah(cost.total||0)}</strong></td></tr>
+      </table>`;
+  } else if(type==="rincian-biaya"){
+    title="RINCIAN BIAYA PERJALANAN DINAS";
+    body=`
+      <table>
+        <tr><td width="220">Pelaksana</td><td>: ${escapeHTML(peopleNames)}</td></tr>
+        <tr><td>Jumlah Pelaksana</td><td>: ${people.length} orang</td></tr>
+        <tr><td>Dasar Hukum / Standar Biaya</td><td>: ${escapeHTML(trip.legalBasisName||"-")}</td></tr>
+        <tr><td>Anggaran Tersedia</td><td>: ${formatRupiah(trip.budget||0)}</td></tr>
+        <tr><td>Nomor Perjalanan</td><td>: ${escapeHTML(trip.number)}</td></tr>
+        <tr><td>Uang Harian</td><td>: ${formatRupiah(cost.dailyTotal)}</td></tr>
+        <tr><td>Hotel</td><td>: ${formatRupiah(cost.hotelTotal)}</td></tr>
+        <tr><td>Transport</td><td>: ${formatRupiah(cost.transportTotal)}</td></tr>
+        <tr><td>Biaya Lain</td><td>: ${formatRupiah(cost.otherTotal)}</td></tr>
+        <tr><td><strong>Total</strong></td><td><strong>: ${formatRupiah(cost.total)}</strong></td></tr>
+      </table>`;
+  } else {
+    title="LAPORAN PERJALANAN DINAS";
+    body=`
+      <table>
+        <tr><td width="150">Pelaksana</td><td>: ${escapeHTML(peopleNames)}</td></tr>
+        <tr><td>Kegiatan</td><td>: ${escapeHTML(trip.purpose)}</td></tr>
+        <tr><td>Tujuan</td><td>: ${escapeHTML(trip.destination)}</td></tr>
+        <tr><td>Waktu</td><td>: ${formatDate(trip.start)} s.d. ${formatDate(trip.end)}</td></tr>
+        <tr><td>Status</td><td>: ${escapeHTML(trip.status)}</td></tr>
+      </table>
+      <p style="margin-top:25px;font-size:12px">Catatan:</p>
+      <p style="font-size:12px;line-height:1.7">${escapeHTML(trip.notes||"Tidak ada catatan.")}</p>`;
+  }
+
+  document.getElementById("documentPreviewBody").innerHTML=`
+    <div class="document-preview">
+      <div style="text-align:center;font-weight:700;font-size:14px">${institution}</div>
+      <div style="text-align:center;font-size:12px">${unit}</div>
+      <div style="text-align:center;font-size:10px">${address}</div>
+      <div class="doc-line"></div>
+      <div class="doc-title">${title}</div>
+      <div class="doc-subtitle">${escapeHTML(trip.number)}</div>
+      ${body}
+      <div class="signature">
+        ${address}<br><br><br><br>
+        <strong>Pejabat / Penanggung Jawab</strong>
+      </div>
+    </div>`;
+}
+
+function openDocumentPreviewFromDetail(){
+  const title=document.getElementById("tripDetailTitle").textContent;
+  const trip=data.trips.find(t => title.startsWith(t.number+" — "));
+  if(!trip){
+    showToast("Data tidak ditemukan","Perjalanan tidak dapat dibuka.");
+    return;
+  }
+  document.getElementById("documentTripSelect").value=String(trip.id);
+  document.getElementById("documentType").value="surat-tugas";
+  renderDocumentPreview(trip,"surat-tugas");
+  closeModal("tripDetailModal");
+  document.getElementById("documentPreviewModal").classList.add("show");
+}
+
+function printDocument(){
+  document.body.classList.add("print-document");
+  window.print();
+  setTimeout(()=>document.body.classList.remove("print-document"),500);
+}
+
+function closeDocumentPreview(){
+  document.body.classList.remove("print-document");
+  closeModal("documentPreviewModal");
+}
+
+
+/* =====================================================
+   FITUR TAMBAHAN: CSV PARSER
+===================================================== */
+function parseCSV(text){
+  const rows=[];
+  let row=[],cell="",quoted=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i], next=text[i+1];
+    if(ch==='"'){
+      if(quoted && next==='"'){cell+='"';i++;}
+      else quoted=!quoted;
+    } else if(ch===',' && !quoted){
+      row.push(cell);cell="";
+    } else if((ch==='\n' || ch==='\r') && !quoted){
+      if(ch==='\r' && next==='\n') i++;
+      row.push(cell);cell="";
+      if(row.some(v=>v.trim()!=="")) rows.push(row);
+      row=[];
+    } else {
+      cell+=ch;
+    }
+  }
+  if(cell!=="" || row.length){
+    row.push(cell);
+    if(row.some(v=>v.trim()!=="")) rows.push(row);
+  }
+  return rows;
+}
+
+
+/* =====================================================
+   FITUR TAMBAHAN: TRIP DETAIL
+===================================================== */
+function openTripDetail(id){
+  const trip=data.trips.find(t=>t.id===id);
+  if(!trip) return;
+  document.getElementById("tripDetailTitle").textContent=`${trip.number} — ${trip.employee}`;
+  document.getElementById("tripDetailBody").innerHTML=`
+    <div class="trip-detail-grid">
+      <div>
+        <div class="card" style="box-shadow:none">
+          <div class="card-header"><div><div class="card-title">Informasi Perjalanan</div></div></div>
+          <div class="card-body">
+            <div class="form-grid">
+              <div class="form-group"><span class="form-label">Kegiatan</span><div>${escapeHTML(trip.purpose)}</div></div>
+              <div class="form-group"><span class="form-label">Tujuan</span><div>${escapeHTML(trip.destination)}</div></div>
+              <div class="form-group"><span class="form-label">Berangkat</span><div>${formatDate(trip.start)}</div></div>
+              <div class="form-group"><span class="form-label">Kembali</span><div>${formatDate(trip.end)}</div></div>
+            </div>
+            <div style="height:15px"></div>
+            ${trip.latitude && trip.longitude ? `<div class="geotag-box"><div class="coords">Geotag: ${escapeHTML(trip.latitude)}, ${escapeHTML(trip.longitude)}</div><a class="action-btn" target="_blank" rel="noopener" href="https://www.google.com/maps?q=${encodeURIComponent(trip.latitude+","+trip.longitude)}">Peta</a></div>` : `<div class="geotag-box"><div class="coords">Belum ada geotag.</div></div>`}
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="box-shadow:none">
+          <div class="card-header"><div><div class="card-title">Checklist SPJ / Dokumen</div><div class="card-subtitle">Tandai dokumen yang sudah tersedia.</div></div></div>
+          <div class="card-body"><div id="tripChecklist" class="checklist"></div></div>
+        </div>
+      </div>
+    </div>
+    <div style="height:16px"></div>
+    <div class="card" style="box-shadow:none">
+      <div class="card-header"><div><div class="card-title">Alur Status</div><div class="card-subtitle">Status saat ini dan tahap berikutnya.</div></div></div>
+      <div class="card-body">
+        <div class="status-flow">
+          ${STATUS_FLOW.map((s,i)=>{
+            const idx=statusIndex(trip.status);
+            return `<div class="status-step ${i<idx?'done':''} ${i===idx?'current':''}"><div class="step-dot">${i<idx?'✓':i+1}</div><span>${escapeHTML(s)}</span></div>`;
+          }).join("")}
+        </div>
+      </div>
+    </div>`;
+  renderTripChecklist(trip);
+  document.getElementById("tripDetailModal").classList.add("show");
+}
 
 /* =====================================================
    NOTIFICATIONS
@@ -4837,6 +5850,12 @@ updateDashboard();
 renderCalendar("calendar");
 
 loadSettings();
+
+normalizeFeatureData();
+updateEmployeeSelect();
+loadCostRates();
+populateFeatureTripSelects();
+renderGeotags();
 
 </script>
 
