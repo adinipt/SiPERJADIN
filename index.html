@@ -231,8 +231,8 @@ textarea{resize:vertical; min-height:64px;}
   .sidebar-backdrop{display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:35;}
   .sidebar-backdrop.open{display:block;}
 }
-</style>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+.cal-actions{display:inline-flex;gap:2px;margin-left:3px;vertical-align:middle}.cal-actions button{border:0;background:transparent;padding:0;cursor:pointer;font-size:11px;line-height:1}.cal-event{display:flex;align-items:center;justify-content:space-between;gap:3px}.cal-event>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}</style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
 </head>
 <body>
 <div id="app">
@@ -285,7 +285,9 @@ textarea{resize:vertical; min-height:64px;}
 /* =========================================================
    SiPERJADIN — data layer
 ========================================================= */
-const STORE_KEY = 'siperjadin_v1';
+const STORE_KEY = 'siperjadin_v7_clean';
+// Mulai dari penyimpanan baru agar tidak ada data demo/progres dari versi sebelumnya.
+try{ ['siperjadin_v1','siperjadin_v2','siperjadin_v3','siperjadin_v4','siperjadin_v5','siperjadin_v6_clean'].forEach(k=>localStorage.removeItem(k)); }catch(e){}
 const todayISO = () => new Date().toISOString().slice(0,10);
 const fmtRp = n => 'Rp' + Math.round(n||0).toLocaleString('id-ID');
 const fmtDate = d => d ? new Date(d+'T00:00:00').toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}) : '-';
@@ -294,28 +296,16 @@ const uid = p => p + '-' + Math.random().toString(36).slice(2,8);
 
 function seedData(){
   return {
-    settings:{ tahunAnggaran:2026, batasLPJHari:5, namaInstansi:'Instansi Pemerintah Contoh', kotaInstansi:'Kupang', kalenderMode:'otomatis' },
-    pegawai:[
-      {id:'p1', nama:'Dr. Andreas Bimo, S.T., M.T.', nip:'197805122005011009', golongan:'IV/c', jabatan:'Sekretaris Direktorat Jenderal', kategori:'Eselon I', unit:'Sekretariat Ditjen'},
-      {id:'p2', nama:'Sri Wahyuni, S.E., M.M.', nip:'198203142006042003', golongan:'IV/a', jabatan:'Kepala Bagian Perencanaan', kategori:'Eselon II', unit:'Biro Perencanaan'},
-      {id:'p3', nama:'Fajar Nugraha, S.Kom.', nip:'198906302011011005', golongan:'III/d', jabatan:'Kepala Subbagian Data', kategori:'Eselon III/IV', unit:'Biro Perencanaan'},
-      {id:'p4', nama:'Melati Kusuma, A.Md.', nip:'199202152015022001', golongan:'III/a', jabatan:'Analis Kepegawaian', kategori:'Fungsional/Staf', unit:'Biro SDM'},
-      {id:'p5', nama:'Yohanes Rian Making', nip:'199512012019031004', golongan:'II/c', jabatan:'Pengelola Keuangan', kategori:'Fungsional/Staf', unit:'Biro Keuangan'},
-      {id:'p6', nama:'Ratna Dewi Sartika, S.H.', nip:'198711232012042002', golongan:'III/c', jabatan:'Kepala Subbagian Hukum', kategori:'Eselon III/IV', unit:'Biro Hukum'}
-    ],
-    unitKerja:[
-      {id:'u1', nama:'Sekretariat Ditjen', pagu:450000000},
-      {id:'u2', nama:'Biro Perencanaan', pagu:280000000},
-      {id:'u3', nama:'Biro SDM', pagu:180000000},
-      {id:'u4', nama:'Biro Keuangan', pagu:150000000},
-      {id:'u5', nama:'Biro Hukum', pagu:120000000}
-    ],
+    settings:{ tahunAnggaran:new Date().getFullYear(), batasLPJHari:5, namaInstansi:'', kotaInstansi:'', kalenderMode:'otomatis' },
+    // Semua data pribadi/SPPD/progres sengaja dimulai KOSONG. Data hanya muncul setelah pengguna memasukkannya.
+    pegawai:[],
+    unitKerja:[],
     zona:[
       {id:'z1', nama:'Zona 1 (mis. Aceh, Sumut, Kalimantan)', harian:360000},
       {id:'z2', nama:'Zona 2 (mis. Sumatera lain, Jawa, Bali)', harian:430000},
       {id:'z3', nama:'Zona 3 (mis. NTB, NTT, Sulawesi)', harian:480000},
       {id:'z4', nama:'Zona 4 (mis. Maluku, sebagian Kalimantan)', harian:530000},
-      {id:'z5', nama:'Zona 5 (Papua &amp; sekitarnya)'.replace('&amp;','&'), harian:580000}
+      {id:'z5', nama:'Zona 5 (Papua & sekitarnya)', harian:580000}
     ],
     dalamKota:{ umum:230000, diklat:170000 },
     representasi:{ 'Eselon I':130000, 'Eselon II':65000, 'Eselon III/IV':0, 'Fungsional/Staf':0 },
@@ -325,22 +315,20 @@ function seedData(){
       'Eselon III/IV':{tinggi:1900000, sedang:1200000, rendah:750000},
       'Fungsional/Staf':{tinggi:1200000, sedang:800000, rendah:500000}
     },
-    transportLokal: 196000,
-    sppd:[],
-    lpj:[],
-    kalenderManual:[],
-    seq:1
+    transportLokal:196000,
+    sppd:[], lpj:[], kalenderManual:[], kehadiran:[], seq:1
   };
 }
 
 function normalizeData(d){
   d = d || {};
-  d.settings = Object.assign({tahunAnggaran:new Date().getFullYear(), batasLPJHari:5, namaInstansi:'Instansi Pemerintah', kotaInstansi:'', kalenderMode:'otomatis'}, d.settings||{});
+  d.settings = Object.assign({tahunAnggaran:new Date().getFullYear(), batasLPJHari:5, namaInstansi:'', kotaInstansi:'', kalenderMode:'otomatis'}, d.settings||{});
   d.pegawai = Array.isArray(d.pegawai)?d.pegawai:[];
   d.unitKerja = Array.isArray(d.unitKerja)?d.unitKerja:[];
   d.sppd = Array.isArray(d.sppd)?d.sppd:[];
   d.lpj = Array.isArray(d.lpj)?d.lpj:[];
   d.kalenderManual = Array.isArray(d.kalenderManual)?d.kalenderManual:[];
+  d.kehadiran = Array.isArray(d.kehadiran)?d.kehadiran:[];
   return d;
 }
 function loadData(){
@@ -348,182 +336,18 @@ function loadData(){
     const raw = localStorage.getItem(STORE_KEY);
     if(raw){ return normalizeData(JSON.parse(raw)); }
   }catch(e){ console.warn('storage read failed', e); }
-  const seeded = normalizeData(seedData());
-  seedSppdExamples(seeded);
-  saveData(seeded);
-  return seeded;
+  const fresh = normalizeData(seedData());
+  saveData(fresh);
+  return fresh;
 }
+
 function saveData(d){
   try{ localStorage.setItem(STORE_KEY, JSON.stringify(d)); }
   catch(e){ console.warn('storage write failed', e); }
 }
 
-function seedSppdExamples(d){
-  const mk = (over) => {
-    const base = {
-      id: uid('sppd'), nomor:'', maksud:'Rapat koordinasi', kotaTujuan:'Jakarta', zonaId:'z2',
-      tanggalBerangkat: todayISO(), tanggalKembali: todayISO(), moda:'Pesawat Udara',
-      unitId:'u2', sumberDana:'DIPA/RKA Unit Kerja', pegawaiIds:['p2'], statusDalamKota:false,
-      biayaTiket:1800000, status:'Terbit', catatan:'', createdAt: new Date().toISOString(),
-      approvalLog:[]
-    };
-    return Object.assign(base, over);
-  };
-  const items = [
-    mk({ maksud:'Koordinasi program tahun anggaran', kotaTujuan:'Jakarta', zonaId:'z2', pegawaiIds:['p1'], unitId:'u1', tanggalBerangkat:addDays(-12), tanggalKembali:addDays(-10), status:'Selesai', biayaTiket:2200000 }),
-    mk({ maksud:'Bimbingan teknis pengelolaan keuangan', kotaTujuan:'Surabaya', zonaId:'z2', pegawaiIds:['p5'], unitId:'u4', tanggalBerangkat:addDays(-6), tanggalKembali:addDays(-4), status:'Menunggu LPJ', biayaTiket:1500000 }),
-    mk({ maksud:'Rapat harmonisasi regulasi', kotaTujuan:'Kupang', zonaId:'z3', pegawaiIds:['p6'], unitId:'u5', tanggalBerangkat:addDays(2), tanggalKembali:addDays(3), status:'SPPD Terbit', biayaTiket:1650000 }),
-    mk({ maksud:'Monitoring dan evaluasi lapangan', kotaTujuan:'Jayapura', zonaId:'z5', pegawaiIds:['p3'], unitId:'u2', tanggalBerangkat:addDays(5), tanggalKembali:addDays(8), status:'Diajukan', biayaTiket:5200000 }),
-    mk({ maksud:'Diklat penguatan kapasitas SDM', kotaTujuan:'Bandung', zonaId:'z2', pegawaiIds:['p4'], unitId:'u3', tanggalBerangkat:addDays(9), tanggalKembali:addDays(11), status:'Disetujui Atasan', biayaTiket:900000 })
-  ];
-  items.forEach(it => { it.nomor = nextNomor(d, it.unitId, it.tanggalBerangkat); computeBiaya(d, it); d.sppd.push(it); });
-  d.lpj.push({ id: uid('lpj'), sppdId: items[1].id, tanggalLapor: addDays(-2), ringkasan:'Kegiatan bimtek terlaksana sesuai jadwal, seluruh peserta unit kerja daerah hadir.', biayaRiil: items[1].totalBiaya - 150000, status:'Menunggu Verifikasi' });
-}
-function addDays(n){ const dt = new Date(); dt.setDate(dt.getDate()+n); return dt.toISOString().slice(0,10); }
-
+// Data aplikasi dimuat setelah seluruh fungsi data-layer tersedia.
 let DB = loadData();
-
-/* ---------- business logic ---------- */
-function nextNomor(d, unitId, tglBerangkat){
-  const unit = d.unitKerja.find(u=>u.id===unitId);
-  const kode = unit ? unit.nama.split(' ').map(w=>w[0]).join('').toUpperCase() : 'UM';
-  const n = d.seq++;
-  const dt = new Date(tglBerangkat || todayISO());
-  const bulanRomawi = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'][dt.getMonth()];
-  return String(n).padStart(3,'0') + '/SPPD/' + kode + '/' + bulanRomawi + '/' + dt.getFullYear();
-}
-
-function computeBiaya(d, s){
-  const lama = Math.max(1, daysBetween(s.tanggalBerangkat, s.tanggalKembali));
-  const malam = Math.max(0, lama - 1);
-  const zona = d.zona.find(z=>z.id===s.zonaId) || d.zona[0];
-  const pegawaiList = s.pegawaiIds.map(id => d.pegawai.find(p=>p.id===id)).filter(Boolean);
-  let harianTotal=0, representasiTotal=0, penginapanTotal=0;
-  const tierPenginapan = s.tierPenginapan || 'sedang';
-  pegawaiList.forEach(p=>{
-    const rateHarian = s.statusDalamKota ? d.dalamKota.umum : zona.harian;
-    harianTotal += rateHarian * lama;
-    representasiTotal += (d.representasi[p.kategori]||0) * lama;
-    const pRate = (d.penginapan[p.kategori]||d.penginapan['Fungsional/Staf'])[tierPenginapan];
-    penginapanTotal += s.statusDalamKota ? 0 : pRate * malam;
-  });
-  const transportLokalTotal = pegawaiList.length * d.transportLokal * (s.statusDalamKota?0:2);
-  const tiket = s.statusDalamKota ? 0 : (s.biayaTiket||0) * pegawaiList.length;
-  s.lama = lama; s.malam = malam;
-  s.rincian = { harianTotal, representasiTotal, penginapanTotal, transportLokalTotal, tiket };
-  s.totalBiaya = harianTotal + representasiTotal + penginapanTotal + transportLokalTotal + tiket;
-  return s;
-}
-
-const STATUS_FLOW = ['Diajukan','Disetujui Atasan','Disetujui PPK','SPPD Terbit','Sedang Berjalan','Selesai','Menunggu LPJ','LPJ Terverifikasi'];
-function statusBadgeClass(st){
-  return ({
-    'Draft':'b-draft','Diajukan':'b-diajukan','Disetujui Atasan':'b-atasan','Disetujui PPK':'b-ppk',
-    'SPPD Terbit':'b-terbit','Sedang Berjalan':'b-berjalan','Selesai':'b-selesai',
-    'Menunggu LPJ':'b-lpj','LPJ Terverifikasi':'b-tutup','Ditolak':'b-tolak'
-  })[st] || 'b-draft';
-}
-function autoAdvanceByDate(d){
-  const t = todayISO();
-  d.sppd.forEach(s=>{
-    if(s.status==='SPPD Terbit' && s.tanggalBerangkat<=t && s.tanggalKembali>=t){ s.status='Sedang Berjalan'; }
-    if(s.status==='Sedang Berjalan' && s.tanggalKembali<t){ s.status='Selesai'; }
-    if(s.status==='Selesai'){
-      const lpj = d.lpj.find(l=>l.sppdId===s.id);
-      if(!lpj) s.status='Menunggu LPJ';
-    }
-  });
-}
-
-function calendarAutoStatus(s){
-  const t = todayISO();
-  if(s.tanggalBerangkat > t) return 'Perencanaan';
-  if(s.tanggalBerangkat <= t && s.tanggalKembali >= t) return 'Berlangsung';
-  return 'Selesai';
-}
-function calendarStatus(s){
-  if(s.kalenderMode==='manual' && s.manualCalendarStatus) return s.manualCalendarStatus;
-  return calendarAutoStatus(s);
-}
-function calendarStatusClass(st){
-  return st==='Perencanaan'?'cal-plan':st==='Berlangsung'?'cal-live':'cal-done';
-}
-function calendarStatusIcon(st){
-  return st==='Perencanaan'?'🟡':st==='Berlangsung'?'🔵':'🟢';
-}
-function calendarDateMap(year, month){
-  const map = {};
-  DB.sppd.forEach(s=>{
-    const start = new Date(s.tanggalBerangkat+'T00:00:00');
-    const end = new Date(s.tanggalKembali+'T00:00:00');
-    const cur = new Date(start);
-    while(cur <= end){
-      if(cur.getFullYear()===year && cur.getMonth()===month){
-        const key = cur.toISOString().slice(0,10);
-        (map[key] ||= []).push(s);
-      }
-      cur.setDate(cur.getDate()+1);
-    }
-  });
-  DB.kalenderManual.forEach(e=>{
-    if(!e.tanggal) return;
-    const d = new Date(e.tanggal+'T00:00:00');
-    if(d.getFullYear()===year && d.getMonth()===month){
-      (map[e.tanggal] ||= []).push(Object.assign({isManualEvent:true}, e));
-    }
-  });
-  return map;
-}
-function escapeCsv(v){
-  return '"'+String(v??'').replace(/"/g,'""')+'"';
-}
-function parseDelimited(text){
-  const rows = text.trim().split(/\r?\n/).filter(Boolean);
-  if(!rows.length) return [];
-  const delim = rows[0].includes('\t') ? '\t' : ',';
-  return rows.map(line=>{
-    const out=[]; let cur='', quoted=false;
-    for(let i=0;i<line.length;i++){
-      const ch=line[i], nx=line[i+1];
-      if(ch==='"' && quoted && nx==='"'){cur+='"';i++;continue;}
-      if(ch==='"'){quoted=!quoted;continue;}
-      if(ch===delim && !quoted){out.push(cur);cur='';} else cur+=ch;
-    }
-    out.push(cur); return out;
-  });
-}
-function importPegawaiRows(rows){
-  if(!rows.length) return 0;
-  const headers = rows[0].map(x=>String(x).trim().toLowerCase().replace(/\s+/g,'_'));
-  const aliases = {
-    nama:['nama','nama_lengkap','nama_pegawai','name'],
-    nip:['nip','nomor_induk_pegawai'],
-    golongan:['golongan','golongan_ruang','pangkat_golongan'],
-    jabatan:['jabatan','position'],
-    kategori:['kategori','kategori_tarif','kategori_tarif_sbm'],
-    unit:['unit','unit_kerja','organisasi','opd']
-  };
-  const idx = {};
-  Object.keys(aliases).forEach(k=>idx[k]=headers.findIndex(h=>aliases[k].includes(h)));
-  let added=0, updated=0;
-  rows.slice(1).forEach(r=>{
-    const get=k=>idx[k]>=0 ? String(r[idx[k]]||'').trim() : '';
-    const nama=get('nama'); if(!nama) return;
-    const data={
-      nama,
-      nip:get('nip'),
-      golongan:get('golongan') || 'III/a',
-      jabatan:get('jabatan'),
-      kategori:get('kategori') || 'Fungsional/Staf',
-      unit:get('unit') || (DB.unitKerja[0]?.nama||'')
-    };
-    const existing = DB.pegawai.find(p => data.nip && p.nip===data.nip);
-    if(existing){ Object.assign(existing,data); updated++; }
-    else { DB.pegawai.push(Object.assign({id:uid('p')},data)); added++; }
-  });
-  saveData(DB);
-  return {added,updated};
-}
 
 /* =========================================================
    Router / render
@@ -541,6 +365,16 @@ const VIEWS = {
   hukum:{title:'Dasar Hukum', sub:'Regulasi acuan penyelenggaraan perjalanan dinas', render:renderHukum}
 };
 let currentView = 'dashboard';
+
+function autoAdvanceByDate(d){
+  if(!d || !Array.isArray(d.sppd)) return;
+  const t=todayISO();
+  d.sppd.forEach(s=>{
+    if(!s || !s.status) return;
+    if(s.status==='SPPD Terbit' && s.tanggalBerangkat && s.tanggalKembali && s.tanggalBerangkat<=t && s.tanggalKembali>=t) s.status='Sedang Berjalan';
+    else if(s.status==='Sedang Berjalan' && s.tanggalKembali && s.tanggalKembali<t) s.status='Selesai';
+  });
+}
 
 function navigate(view){
   currentView = view;
@@ -581,6 +415,7 @@ function renderDashboard(){
   const perluLpj = DB.sppd.filter(s=>s.status==='Menunggu LPJ').length;
   const totalRealisasi = DB.sppd.filter(s=>['Selesai','Menunggu LPJ','LPJ Terverifikasi'].includes(s.status)).reduce((a,s)=>a+s.totalBiaya,0);
   const totalPagu = DB.unitKerja.reduce((a,u)=>a+u.pagu,0);
+  const serapanPct = totalPagu ? (totalRealisasi/totalPagu*100) : 0;
 
   const byMonth = {};
   DB.sppd.forEach(s=>{ const m = s.tanggalBerangkat.slice(0,7); byMonth[m] = (byMonth[m]||0) + s.totalBiaya; });
@@ -640,8 +475,8 @@ function renderDashboard(){
       <div class="card">
         <h3>Realisasi Anggaran Perjadin</h3>
         <div class="muted">${fmtRp(totalRealisasi)} dari pagu ${fmtRp(totalPagu)} (TA ${DB.settings.tahunAnggaran})</div>
-        <div class="progress-bar" style="margin-top:12px;"><div class="progress-fill" style="width:${Math.min(100,totalRealisasi/totalPagu*100)}%; background:${totalRealisasi/totalPagu>0.9?'var(--danger)':'var(--accent)'}"></div></div>
-        <div class="muted" style="margin-top:8px;">${(totalRealisasi/totalPagu*100).toFixed(1)}% terealisasi</div>
+        <div class="progress-bar" style="margin-top:12px;"><div class="progress-fill" style="width:${Math.min(100,serapanPct)}%; background:${serapanPct>90?'var(--danger)':'var(--accent)'}"></div></div>
+        <div class="muted" style="margin-top:8px;">${serapanPct.toFixed(1)}% terealisasi</div>
         <button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="navigate('anggaran')">Lihat detail per unit kerja →</button>
       </div>
       <div class="card">
@@ -690,14 +525,14 @@ function renderPerencanaan(){
     </div>
     <div class="section-title"><h2>Daftar Rencana Perjalanan Dinas</h2><span class="hint">Keberangkatan setelah hari ini</span></div>
     <div class="table-wrap"><table>
-      <thead><tr><th>Unit Kerja</th><th>Tujuan</th><th>Maksud</th><th>Periode</th><th>Pegawai</th><th>Estimasi Biaya</th><th>Status</th></tr></thead>
+      <thead><tr><th>Unit Kerja</th><th>Tujuan</th><th>Maksud</th><th>Periode</th><th>Pegawai</th><th>Estimasi Biaya</th><th>Status</th><th>Aksi</th></tr></thead>
       <tbody>
         ${planned.map(s=>`<tr>
           <td>${unitName(s.unitId)}</td><td>${s.kotaTujuan}</td><td>${s.maksud}</td>
           <td>${fmtDate(s.tanggalBerangkat)} – ${fmtDate(s.tanggalKembali)}</td>
           <td>${pegawaiNames(s)}</td><td>${fmtRp(s.totalBiaya)}</td>
-          <td><span class="badge ${statusBadgeClass(s.status)}">${s.status}</span></td>
-        </tr>`).join('') || `<tr><td colspan="7"><div class="empty">Belum ada rencana. Buat pengajuan baru dari menu Pengajuan SPPD.</div></td></tr>`}
+          <td><span class="badge ${statusBadgeClass(s.status)}">${s.status}</span></td><td><div class="actions-row"><button class="icon-btn" title="Lihat" onclick="viewSppd('${s.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="openSppdModal('${s.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deleteSppdAndRefresh('${s.id}','perencanaan')">🗑️</button></div></td>
+        </tr>`).join('') || `<tr><td colspan="8"><div class="empty">Belum ada rencana. Buat pengajuan baru dari menu Pengajuan SPPD.</div></td></tr>`}
       </tbody>
     </table></div>
     <button class="btn btn-primary" style="margin-top:14px;" onclick="openSppdModal()">+ Tambah Rencana / Pengajuan SPPD</button>
@@ -728,9 +563,9 @@ function renderKalender(){
     cells+=`<div class="cal-day ${inMonth?'':'muted'} ${isToday?'today':''}" ondblclick="${inMonth?`openCalendarDay('${iso}')`:''}">
       <div class="cal-num">${inMonth?day:''}</div>
       ${items.slice(0,5).map(s=>{
-        if(s.isManualEvent) return `<div class="cal-event cal-manual" title="Edit agenda manual" onclick="openManualCalendarModal('${s.id}')">📝 ${s.judul}</div>`;
+        if(s.isManualEvent) return `<div class="cal-event cal-manual" title="Agenda manual"><span onclick="viewManualCalendar('${s.id}')">📝 ${s.judul}</span><span class="cal-actions"><button onclick="event.stopPropagation();viewManualCalendar('${s.id}')">👁️</button><button onclick="event.stopPropagation();openManualCalendarModal('${s.id}')">✏️</button><button onclick="event.stopPropagation();deleteManualCalendar('${s.id}')">🗑️</button></span></div>`;
         const st=calendarStatus(s);
-        return `<div class="cal-event ${calendarStatusClass(st)}" title="Edit perjalanan" onclick="openSppdModal('${s.id}')">${calendarStatusIcon(st)} ${s.kotaTujuan} · ${pegawaiNames(s)}</div>`;
+        return `<div class="cal-event ${calendarStatusClass(st)}" title="Perjalanan"><span onclick="viewSppd('${s.id}')">${calendarStatusIcon(st)} ${s.kotaTujuan} · ${pegawaiNames(s)}</span><span class="cal-actions"><button onclick="event.stopPropagation();viewSppd('${s.id}')">👁️</button><button onclick="event.stopPropagation();openSppdModal('${s.id}')">✏️</button><button onclick="event.stopPropagation();deleteSppdAndRefresh('${s.id}','kalender')">🗑️</button></span></div>`;
       }).join('')}
       ${items.length>5?`<div class="muted" style="font-size:10px;">+${items.length-5} lainnya</div>`:''}
     </div>`;
@@ -791,6 +626,9 @@ function deleteManualCalendar(id){
   DB.kalenderManual=DB.kalenderManual.filter(x=>x.id!==id);
   saveData(DB); closeModal(); renderKalender(); toast('Agenda dihapus');
 }
+function viewManualCalendar(id){ const e=DB.kalenderManual.find(x=>x.id===id); if(!e)return; simpleView('Lihat Agenda Kalender',`<b>Tanggal:</b> ${fmtDate(e.tanggal)}<br><b>Judul:</b> ${esc(e.judul)}<br><b>Status:</b> ${esc(e.status||'-')}<br><b>Keterangan:</b><br>${esc(e.keterangan||'-')}`); }
+function deleteSppdAndRefresh(id,target){ if(!confirm('Hapus data SPPD ini? Data LPJ terkait juga akan dihapus.')) return; DB.sppd=DB.sppd.filter(s=>s.id!==id); DB.lpj=DB.lpj.filter(l=>l.sppdId!==id); saveData(DB); if(target==='perencanaan') renderPerencanaan(); else if(target==='approval') renderApproval(); else if(target==='lpj') renderLpj(); else if(target==='kalender') renderKalender(); else if(VIEWS[currentView]) VIEWS[currentView].render(); toast('SPPD dihapus'); }
+function deleteUnitFromAnggaran(id){ deleteUnit(id); if(VIEWS[currentView]) VIEWS[currentView].render(); }
 
 /* =========================================================
    PENGAJUAN SPPD (list + form)
@@ -829,7 +667,7 @@ function filterSppdTable(){
       <td>${fmtRp(s.totalBiaya)}</td>
       <td><span class="badge ${statusBadgeClass(s.status)}">${s.status}</span></td>
       <td><div class="actions-row">
-        <button class="icon-btn" title="Lihat / Edit" onclick="openSppdModal('${s.id}')">✏️</button>
+        <button class="icon-btn" title="Lihat" onclick="viewSppd('${s.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="openSppdModal('${s.id}')">✏️</button>
         <button class="icon-btn" title="Cetak Dokumen" onclick="navigate('dokumen'); setTimeout(()=>selectDokumen('${s.id}'),50)">📄</button>
         <button class="icon-btn" title="Hapus" onclick="deleteSppd('${s.id}')">🗑️</button>
       </div></td>
@@ -845,7 +683,7 @@ function deleteSppd(id){
 
 function openSppdModal(id){
   const editing = id ? DB.sppd.find(s=>s.id===id) : null;
-  const s = editing || { id:null, pegawaiIds:[], unitId:DB.unitKerja[0].id, kotaTujuan:'', zonaId:DB.zona[1].id,
+  const s = editing || { id:null, pegawaiIds:[], unitId:DB.unitKerja[0]?.id||'', kotaTujuan:'', zonaId:DB.zona[1].id,
     tanggalBerangkat: todayISO(), tanggalKembali: todayISO(), moda:'Kendaraan Dinas', maksud:'', sumberDana:'DIPA/RKA Unit Kerja',
     biayaTiket:0, statusDalamKota:false, tierPenginapan:'sedang', catatan:'' };
 
@@ -1053,7 +891,7 @@ function renderApproval(){
   const section = (title, list, actionLabel, nextStatus, icon) => `
     <div class="section-title"><h2>${icon} ${title}</h2><span class="hint">${list.length} pengajuan</span></div>
     <div class="table-wrap"><table>
-      <thead><tr><th>Nomor</th><th>Pegawai</th><th>Tujuan &amp; Maksud</th><th>Periode</th><th>Biaya</th><th></th></tr></thead>
+      <thead><tr><th>Nomor</th><th>Pegawai</th><th>Tujuan &amp; Maksud</th><th>Periode</th><th>Biaya</th><th>Aksi</th></tr></thead>
       <tbody>
         ${list.map(s=>`<tr>
           <td>${s.nomor}</td><td>${pegawaiNames(s)}</td>
@@ -1061,8 +899,7 @@ function renderApproval(){
           <td>${fmtDate(s.tanggalBerangkat)} – ${fmtDate(s.tanggalKembali)}</td>
           <td>${fmtRp(s.totalBiaya)}</td>
           <td><div class="actions-row">
-            <button class="btn btn-accent btn-sm" onclick="advanceStatus('${s.id}','${nextStatus}')">✔ ${actionLabel}</button>
-            <button class="btn btn-danger btn-sm" onclick="rejectSppd('${s.id}')">✕ Tolak</button>
+            <button class="icon-btn" title="Lihat" onclick="viewSppd('${s.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="openSppdModal('${s.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deleteSppdAndRefresh('${s.id}','approval')">🗑️</button><button class="btn btn-accent btn-sm" onclick="advanceStatus('${s.id}','${nextStatus}')">✔ ${actionLabel}</button><button class="btn btn-danger btn-sm" onclick="rejectSppd('${s.id}')">✕ Tolak</button>
           </div></td>
         </tr>`).join('') || `<tr><td colspan="6"><div class="empty">Tidak ada antrean.</div></td></tr>`}
       </tbody>
@@ -1224,7 +1061,7 @@ function renderLpj(){
             <td>${s.nomor}</td><td>${pegawaiNames(s)}</td><td>${fmtDate(s.tanggalKembali)}</td>
             <td>${overdue?'<span style="color:var(--danger); font-weight:700;">Lewat batas</span>':fmtDate(addBusinessDays(s.tanggalKembali, DB.settings.batasLPJHari))}</td>
             <td>${fmtRp(s.totalBiaya)}</td>
-            <td><button class="btn btn-accent btn-sm" onclick="openLpjModal('${s.id}')">Isi LPJ</button></td>
+            <td><div class="actions-row"><button class="icon-btn" title="Lihat" onclick="viewSppd('${s.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="openSppdModal('${s.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deleteSppdAndRefresh('${s.id}','lpj')">🗑️</button><button class="btn btn-accent btn-sm" onclick="openLpjModal('${s.id}')">Isi LPJ</button></div></td>
           </tr>`;
         }).join('') || `<tr><td colspan="6"><div class="empty">Tidak ada tunggakan LPJ.</div></td></tr>`}
       </tbody>
@@ -1240,7 +1077,7 @@ function renderLpj(){
           return `<tr>
             <td>${s.nomor}</td><td>${fmtDate(l.tanggalLapor)}</td><td>${fmtRp(s.totalBiaya)}</td><td>${fmtRp(l.biayaRiil)}</td>
             <td style="color:${selisih>=0?'var(--accent)':'var(--danger)'}">${selisih>=0?'Lebih bayar':'Kurang bayar'} ${fmtRp(Math.abs(selisih))}</td>
-            <td><button class="btn btn-outline btn-sm" onclick="verifyLpj('${l.id}')">✔ Verifikasi</button></td>
+            <td><div class="actions-row"><button class="icon-btn" title="Lihat" onclick="viewLpj('${l.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="editLpj('${l.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deleteLpj('${l.id}')">🗑️</button><button class="btn btn-outline btn-sm" onclick="verifyLpj('${l.id}')">✔ Verifikasi</button></div></td>
           </tr>`;
         }).join('') || `<tr><td colspan="6"><div class="empty">Tidak ada laporan menunggu verifikasi.</div></td></tr>`}
       </tbody>
@@ -1248,9 +1085,9 @@ function renderLpj(){
 
     <div class="section-title"><h2>Riwayat LPJ Terverifikasi</h2><span class="hint">${done.length} laporan</span></div>
     <div class="table-wrap"><table>
-      <thead><tr><th>Nomor SPPD</th><th>Ringkasan Hasil</th><th>Biaya Riil</th></tr></thead>
+      <thead><tr><th>Nomor SPPD</th><th>Ringkasan Hasil</th><th>Biaya Riil</th><th>Aksi</th></tr></thead>
       <tbody>
-        ${done.map(l=>{ const s = DB.sppd.find(x=>x.id===l.sppdId); if(!s) return ''; return `<tr><td>${s.nomor}</td><td>${l.ringkasan}</td><td>${fmtRp(l.biayaRiil)}</td></tr>`; }).join('') || `<tr><td colspan="3"><div class="empty">Belum ada riwayat.</div></td></tr>`}
+        ${done.map(l=>{ const s = DB.sppd.find(x=>x.id===l.sppdId); if(!s) return ''; return `<tr><td>${s.nomor}</td><td>${l.ringkasan}</td><td>${fmtRp(l.biayaRiil)}</td><td><div class="actions-row"><button class="icon-btn" title="Lihat" onclick="viewLpj('${l.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="editLpj('${l.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deleteLpj('${l.id}')">🗑️</button></div></td></tr>`; }).join('') || `<tr><td colspan="4"><div class="empty">Belum ada riwayat.</div></td></tr>`}
       </tbody>
     </table></div>
   `;
@@ -1312,14 +1149,15 @@ function renderAnggaran(){
     </div>
     <div class="section-title"><h2>Pagu vs Realisasi per Unit Kerja</h2><span class="hint">TA ${DB.settings.tahunAnggaran}</span></div>
     <div class="table-wrap"><table>
-      <thead><tr><th>Unit Kerja</th><th>Pagu</th><th>Realisasi</th><th>Komitmen Berjalan</th><th>Sisa Pagu</th><th style="min-width:140px;">Serapan</th></tr></thead>
+      <thead><tr><th>Unit Kerja</th><th>Pagu</th><th>Realisasi</th><th>Komitmen Berjalan</th><th>Sisa Pagu</th><th style="min-width:140px;">Serapan</th><th>Aksi</th></tr></thead>
       <tbody>
         ${rows.map(r=>{
-          const pct = (r.realisasi+r.komitmen)/r.u.pagu*100;
+          const pct = r.u.pagu ? (r.realisasi+r.komitmen)/r.u.pagu*100 : 0;
           return `<tr>
             <td><b>${r.u.nama}</b></td><td>${fmtRp(r.u.pagu)}</td><td>${fmtRp(r.realisasi)}</td><td>${fmtRp(r.komitmen)}</td>
             <td style="color:${r.sisa<0?'var(--danger)':'inherit'}">${fmtRp(r.sisa)}</td>
             <td><div class="progress-bar"><div class="progress-fill" style="width:${Math.min(100,pct)}%; background:${pct>95?'var(--danger)':pct>80?'var(--warn)':'var(--accent)'}"></div></div><span class="muted">${pct.toFixed(1)}%</span></td>
+            <td><div class="actions-row"><button class="icon-btn" title="Lihat" onclick="viewUnit('${r.u.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="openUnitModal('${r.u.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deleteUnitFromAnggaran('${r.u.id}')">🗑️</button></div></td>
           </tr>`;
         }).join('')}
       </tbody>
@@ -1354,6 +1192,7 @@ function renderMasterBody(){
         <button class="btn btn-primary btn-sm" onclick="openPegawaiModal()">+ Tambah Pegawai</button>
         <button class="btn btn-outline btn-sm" onclick="downloadPegawaiTemplate()">⬇️ Template Excel</button>
         <button class="btn btn-accent btn-sm" onclick="exportPegawaiExcel()">📤 Ekspor Excel</button>
+        <button class="btn btn-outline btn-sm" onclick="openAttendanceView()">👁️ Lihat Daftar Hadir</button>
         <label class="btn btn-outline btn-sm" style="margin:0;cursor:pointer;">📥 Impor Excel/CSV
           <input type="file" accept=".xlsx,.xls,.csv,.tsv,.txt,.json" style="display:none" onchange="importPegawaiFile(this.files[0])">
         </label>
@@ -1364,20 +1203,20 @@ function renderMasterBody(){
       </div>
       <div class="table-wrap"><table>
         <thead><tr><th>Nama</th><th>NIP</th><th>Golongan</th><th>Jabatan</th><th>Kategori Tarif</th><th>Unit Kerja</th><th></th></tr></thead>
-        <tbody>${DB.pegawai.map(p=>`<tr>
+        <tbody>${DB.pegawai.length?DB.pegawai.map(p=>`<tr>
           <td>${p.nama}</td><td>${p.nip}</td><td>${p.golongan}</td><td>${p.jabatan}</td><td>${p.kategori}</td><td>${p.unit}</td>
-          <td><button class="icon-btn" onclick="openPegawaiModal('${p.id}')">✏️</button></td>
-        </tr>`).join('')}</tbody>
+          <td><div class="actions-row"><button class="icon-btn" title="Lihat" onclick="viewPegawai('${p.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="openPegawaiModal('${p.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deletePegawai('${p.id}')">🗑️</button></div></td>
+        </tr>`).join(''):`<tr><td colspan="7"><div class="empty">Belum ada data pegawai. Impor Excel/CSV atau tambah pegawai.</div></td></tr>`}</tbody>
       </table></div>`;
   } else if(masterTab==='unit'){
     el.innerHTML = `
-      <div class="table-wrap"><table>
-        <thead><tr><th>Unit Kerja</th><th>Pagu Anggaran Perjadin (TA ${DB.settings.tahunAnggaran})</th><th></th></tr></thead>
-        <tbody>${DB.unitKerja.map(u=>`<tr>
+      <div class="toolbar"><button class="btn btn-primary btn-sm" onclick="openUnitModal()">+ Tambah Unit Kerja</button></div><div class="table-wrap"><table>
+        <thead><tr><th>Unit Kerja</th><th>Pagu Anggaran Perjadin (TA ${DB.settings.tahunAnggaran})</th><th>Aksi</th></tr></thead>
+        <tbody>${DB.unitKerja.length?DB.unitKerja.map(u=>`<tr>
           <td>${u.nama}</td>
           <td><input type="number" value="${u.pagu}" onchange="updateUnitPagu('${u.id}', this.value)"></td>
-          <td class="muted">otomatis tersimpan</td>
-        </tr>`).join('')}</tbody>
+          <td><div class="actions-row"><button class="icon-btn" title="Lihat" onclick="viewUnit('${u.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="openUnitModal('${u.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deleteUnit('${u.id}')">🗑️</button></div></td>
+        </tr>`).join(''):`<tr><td colspan="3"><div class="empty">Belum ada unit kerja. Tambahkan unit kerja terlebih dahulu.</div></td></tr>`}</tbody>
       </table></div>`;
   } else if(masterTab==='tarif'){
     el.innerHTML = `
@@ -1432,7 +1271,7 @@ function updateUnitPagu(id, val){ const u = DB.unitKerja.find(x=>x.id===id); u.p
 
 function openPegawaiModal(id){
   const editing = id ? DB.pegawai.find(p=>p.id===id) : null;
-  const p = editing || {nama:'',nip:'',golongan:'III/a',jabatan:'',kategori:'Fungsional/Staf',unit:DB.unitKerja[0].nama};
+  const p = editing || {nama:'',nip:'',golongan:'III/a',jabatan:'',kategori:'Fungsional/Staf',unit:DB.unitKerja[0]?.nama||''};
   document.getElementById('modalBox').className='modal';
   document.getElementById('modalBox').innerHTML = `
     <div class="modal-head"><h3>${editing?'Ubah':'Tambah'} Data Pegawai</h3><button class="close-x" onclick="closeModal()">✕</button></div>
@@ -1513,6 +1352,28 @@ async function importPegawaiFile(file){
   }catch(e){ console.error(e); toast('File tidak dapat diproses. Periksa format kolom.'); }
 }
 
+
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+function simpleView(title,body){document.getElementById('modalBox').className='modal wide';document.getElementById('modalBox').innerHTML=`<div class="modal-head"><h3>${esc(title)}</h3><button class="close-x" onclick="closeModal()">✕</button></div>${body}<div style="text-align:right;margin-top:16px"><button class="btn btn-outline" onclick="closeModal()">Tutup</button></div>`;document.getElementById('modalBg').classList.add('open');}
+function viewSppd(id){const s=DB.sppd.find(x=>x.id===id);if(!s)return;simpleView('Lihat SPPD',`<b>Nomor:</b> ${esc(s.nomor||'-')}<br><b>Status:</b> ${esc(s.status||'-')}<br><b>Pegawai:</b> ${esc(pegawaiNames(s)||'-')}<br><b>Unit:</b> ${esc(unitName(s.unitId))}<br><b>Tujuan:</b> ${esc(s.kotaTujuan)}<br><b>Periode:</b> ${fmtDate(s.tanggalBerangkat)} s.d. ${fmtDate(s.tanggalKembali)}<br><b>Maksud:</b> ${esc(s.maksud)}<br><b>Total:</b> ${fmtRp(s.totalBiaya)}`);}
+function viewPegawai(id){const p=DB.pegawai.find(x=>x.id===id);if(!p)return;simpleView('Lihat Pegawai',`<b>Nama:</b> ${esc(p.nama)}<br><b>NIP:</b> ${esc(p.nip||'-')}<br><b>Golongan:</b> ${esc(p.golongan||'-')}<br><b>Jabatan:</b> ${esc(p.jabatan||'-')}<br><b>Kategori:</b> ${esc(p.kategori||'-')}<br><b>Unit:</b> ${esc(p.unit||'-')}`);}
+function deletePegawai(id){if(!confirm('Hapus pegawai ini?'))return;DB.pegawai=DB.pegawai.filter(x=>x.id!==id);saveData(DB);renderMasterBody();toast('Pegawai dihapus');}
+function viewUnit(id){const u=DB.unitKerja.find(x=>x.id===id);if(u)simpleView('Lihat Unit Kerja',`<b>Nama:</b> ${esc(u.nama)}<br><b>Pagu:</b> ${fmtRp(u.pagu)}`);}
+function deleteUnit(id){if(DB.sppd.some(s=>s.unitId===id)){toast('Unit masih digunakan SPPD.');return;}if(!confirm('Hapus unit kerja ini?'))return;DB.unitKerja=DB.unitKerja.filter(x=>x.id!==id);saveData(DB);renderMasterBody();toast('Unit kerja dihapus');}
+function openUnitModal(id){const u=id?DB.unitKerja.find(x=>x.id===id):{nama:'',pagu:0};document.getElementById('modalBox').className='modal';document.getElementById('modalBox').innerHTML=`<div class="modal-head"><h3>${id?'Edit':'Tambah'} Unit Kerja</h3><button class="close-x" onclick="closeModal()">✕</button></div><label>Nama Unit</label><input id="un_nama" value="${esc(u.nama)}"><div style="height:8px"></div><label>Pagu</label><input type="number" id="un_pagu" value="${u.pagu||0}"><div style="text-align:right;margin-top:14px"><button class="btn btn-primary" onclick="saveUnit('${id||''}')">Simpan</button></div>`;document.getElementById('modalBg').classList.add('open');}
+function saveUnit(id){const d={nama:document.getElementById('un_nama').value.trim(),pagu:Number(document.getElementById('un_pagu').value)||0};if(!d.nama){toast('Nama unit wajib');return;}if(id)Object.assign(DB.unitKerja.find(x=>x.id===id),d);else DB.unitKerja.push(Object.assign({id:uid('u')},d));saveData(DB);closeModal();renderMasterBody();toast('Unit disimpan');}
+function viewLpj(id){const l=DB.lpj.find(x=>x.id===id);if(!l)return;const s=DB.sppd.find(x=>x.id===l.sppdId);simpleView('Lihat LPJ',`<b>SPPD:</b> ${esc(s?.nomor||'-')}<br><b>Tanggal:</b> ${fmtDate(l.tanggalLapor)}<br><b>Status:</b> ${esc(l.status||'-')}<br><b>Biaya Riil:</b> ${fmtRp(l.biayaRiil)}<br><br><b>Ringkasan:</b><br>${esc(l.ringkasan||'-')}`);}
+function editLpj(id){const l=DB.lpj.find(x=>x.id===id);if(!l)return;document.getElementById('modalBox').className='modal';document.getElementById('modalBox').innerHTML=`<div class="modal-head"><h3>Edit LPJ</h3><button class="close-x" onclick="closeModal()">✕</button></div><label>Tanggal</label><input type="date" id="le_t" value="${l.tanggalLapor}"><div style="height:8px"></div><label>Ringkasan</label><textarea id="le_r">${esc(l.ringkasan||'')}</textarea><div style="height:8px"></div><label>Biaya Riil</label><input type="number" id="le_b" value="${l.biayaRiil||0}"><div style="text-align:right;margin-top:14px"><button class="btn btn-primary" onclick="saveLpjEdit('${id}')">Simpan</button></div>`;document.getElementById('modalBg').classList.add('open');}
+function saveLpjEdit(id){const l=DB.lpj.find(x=>x.id===id);l.tanggalLapor=document.getElementById('le_t').value;l.ringkasan=document.getElementById('le_r').value;l.biayaRiil=Number(document.getElementById('le_b').value)||0;saveData(DB);closeModal();renderLpj();}
+function deleteLpj(id){if(!confirm('Hapus LPJ ini?'))return;DB.lpj=DB.lpj.filter(x=>x.id!==id);saveData(DB);renderLpj();toast('LPJ dihapus');}
+function normHead(v){return String(v??'').trim().toLowerCase().replace(/[\s\-\/]+/g,'_').replace(/[()]/g,'');}
+function importAttendanceRows(rows){if(!rows.length)return{added:0,updated:0,attendance:0};const h=rows[0].map(normHead);const ix={nama:h.findIndex(x=>['nama','nama_lengkap','nama_pegawai','pegawai','name'].includes(x)),nip:h.findIndex(x=>['nip','nomor_induk_pegawai','nip_baru'].includes(x)),gol:h.findIndex(x=>['golongan','golongan_ruang','pangkat_golongan'].includes(x)),jab:h.findIndex(x=>['jabatan','position'].includes(x)),unit:h.findIndex(x=>['unit','unit_kerja','opd','organisasi'].includes(x)),kat:h.findIndex(x=>['kategori','kategori_tarif','kategori_sbm'].includes(x)),tanggal:h.findIndex(x=>['tanggal','tgl','tanggal_hadir','tanggal_kehadiran','date'].includes(x)),status:h.findIndex(x=>['status','status_kehadiran','kehadiran','keterangan','presensi','absen'].includes(x)),masuk:h.findIndex(x=>['jam_masuk','waktu_masuk','check_in'].includes(x)),pulang:h.findIndex(x=>['jam_pulang','waktu_pulang','check_out'].includes(x))};const get=(r,k)=>ix[k]>=0?String(r[ix[k]]??'').trim():'';let added=0,updated=0,attendance=0;rows.slice(1).forEach(r=>{const nama=get(r,'nama'),nip=get(r,'nip');if(!nama&&!nip)return;let p=(nip&&DB.pegawai.find(x=>x.nip===nip))||(nama&&DB.pegawai.find(x=>x.nama.toLowerCase()===nama.toLowerCase()));const d={nama:nama||p?.nama||'',nip:nip||p?.nip||'',golongan:get(r,'gol')||p?.golongan||'',jabatan:get(r,'jab')||p?.jabatan||'',kategori:get(r,'kat')||p?.kategori||'Fungsional/Staf',unit:get(r,'unit')||p?.unit||DB.unitKerja[0]?.nama||''};if(p){Object.assign(p,d);updated++;}else{p=Object.assign({id:uid('p')},d);DB.pegawai.push(p);added++;}const tanggal=get(r,'tanggal'),status=get(r,'status'),masuk=get(r,'masuk'),pulang=get(r,'pulang');if(tanggal||status||masuk||pulang){DB.kehadiran.push({id:uid('hadir'),pegawaiId:p.id,nama:p.nama,nip:p.nip,tanggal:tanggal||todayISO(),status:status||'Hadir',jamMasuk:masuk,jamPulang:pulang,sumber:'Impor file'});attendance++;}});saveData(DB);return{added,updated,attendance};}
+async function importPegawaiFile(file){if(!file)return;try{const name=file.name.toLowerCase(),buf=await file.arrayBuffer();let rows=[];if(name.endsWith('.json')){const j=JSON.parse(await file.text());if(Array.isArray(j)&&j.length)rows=[Object.keys(j[0]),...j.map(x=>Object.values(x))];}else if(window.XLSX&&!name.match(/\.(csv|tsv|txt)$/)){const wb=XLSX.read(buf,{type:'array'}),ws=wb.Sheets[wb.SheetNames[0]];rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});}else rows=parseDelimited(new TextDecoder().decode(buf));const r=importAttendanceRows(rows);renderMasterBody();toast(`Impor: ${r.added} baru, ${r.updated} diperbarui, ${r.attendance} catatan hadir`);}catch(e){console.error(e);toast('File gagal diproses.');}}
+function openAttendanceView(){const a=DB.kehadiran||[];simpleView('Riwayat Daftar Hadir',a.length?`<div class="table-wrap"><table><thead><tr><th>Tanggal</th><th>Nama</th><th>NIP</th><th>Status</th><th>Masuk</th><th>Pulang</th><th>Aksi</th></tr></thead><tbody>${a.slice().reverse().map(x=>`<tr><td>${fmtDate(x.tanggal)}</td><td>${esc(x.nama)}</td><td>${esc(x.nip)}</td><td>${esc(x.status)}</td><td>${esc(x.jamMasuk||'-')}</td><td>${esc(x.jamPulang||'-')}</td><td><button class="icon-btn" title="Lihat" onclick="viewAttendance('${x.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="editAttendance('${x.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deleteAttendance('${x.id}')">🗑️</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Belum ada daftar hadir.</div>');}
+function viewAttendance(id){const x=DB.kehadiran.find(v=>v.id===id);if(x)simpleView('Lihat Kehadiran',`<b>Nama:</b> ${esc(x.nama)}<br><b>NIP:</b> ${esc(x.nip)}<br><b>Tanggal:</b> ${fmtDate(x.tanggal)}<br><b>Status:</b> ${esc(x.status)}<br><b>Masuk:</b> ${esc(x.jamMasuk||'-')}<br><b>Pulang:</b> ${esc(x.jamPulang||'-')}`);}
+function editAttendance(id){const x=DB.kehadiran.find(v=>v.id===id);if(!x)return;document.getElementById('modalBox').className='modal';document.getElementById('modalBox').innerHTML=`<div class="modal-head"><h3>Edit Kehadiran</h3><button class="close-x" onclick="closeModal()">✕</button></div><label>Tanggal</label><input type="date" id="ae_t" value="${x.tanggal}"><div style="height:8px"></div><label>Status</label><input id="ae_s" value="${esc(x.status)}"><div style="height:8px"></div><label>Jam Masuk</label><input id="ae_i" value="${esc(x.jamMasuk||'')}"><div style="height:8px"></div><label>Jam Pulang</label><input id="ae_o" value="${esc(x.jamPulang||'')}"><div style="text-align:right;margin-top:14px"><button class="btn btn-primary" onclick="saveAttendance('${id}')">Simpan</button></div>`;document.getElementById('modalBg').classList.add('open');}
+function saveAttendance(id){const x=DB.kehadiran.find(v=>v.id===id);x.tanggal=document.getElementById('ae_t').value;x.status=document.getElementById('ae_s').value;x.jamMasuk=document.getElementById('ae_i').value;x.jamPulang=document.getElementById('ae_o').value;saveData(DB);closeModal();openAttendanceView();}
+function deleteAttendance(id){if(!confirm('Hapus catatan kehadiran?'))return;DB.kehadiran=DB.kehadiran.filter(x=>x.id!==id);saveData(DB);openAttendanceView();toast('Kehadiran dihapus');}
 /* =========================================================
    DASAR HUKUM
 ========================================================= */
