@@ -190,6 +190,22 @@ textarea{resize:vertical; min-height:64px;}
 .sig-block{display:flex; justify-content:flex-end; margin-top:26px;}
 .sig-inner{text-align:center; font-size:12px; width:230px;}
 .sig-inner .space{height:60px;}
+
+.calendar-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card);}
+.cal-head{padding:9px 7px;background:var(--bg);font-size:11px;font-weight:700;color:var(--text-soft);text-align:center;border-right:1px solid var(--border);border-bottom:1px solid var(--border);}
+.cal-day{min-height:125px;padding:7px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--card);}
+.cal-day.muted{background:var(--bg);opacity:.65;}
+.cal-day.today{box-shadow:inset 0 0 0 2px var(--brand);}
+.cal-num{font-weight:700;font-size:12px;margin-bottom:5px;}
+.cal-event{display:block;padding:5px 6px;border-radius:7px;margin:4px 0;font-size:10.5px;line-height:1.25;cursor:pointer;border-left:3px solid;}
+.cal-plan{background:var(--warn-light);border-left-color:var(--warn);color:var(--warn);}
+.cal-live{background:var(--brand-light);border-left-color:var(--brand);color:var(--brand);}
+.cal-done{background:var(--accent-light);border-left-color:var(--accent);color:var(--accent);}
+.cal-manual{background:#eee3fb;border-left-color:#6d33b3;color:#6d33b3;}
+.calendar-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--text-soft);}
+.import-box{border:1px dashed var(--border);padding:14px;border-radius:12px;background:var(--bg);}
+
 @media print{
   body *{visibility:hidden;}
   #printArea, #printArea *{visibility:visible;}
@@ -216,6 +232,7 @@ textarea{resize:vertical; min-height:64px;}
   .sidebar-backdrop.open{display:block;}
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 <div id="app">
@@ -231,6 +248,7 @@ textarea{resize:vertical; min-height:64px;}
     <div class="nav-section-label">Menu Utama</div>
     <div class="nav-item" data-view="dashboard"><span class="nav-icon">📊</span> Dashboard</div>
     <div class="nav-item" data-view="perencanaan"><span class="nav-icon">🗓️</span> Perencanaan Perjadin</div>
+    <div class="nav-item" data-view="kalender"><span class="nav-icon">📅</span> Kalender Perjadin</div>
     <div class="nav-item" data-view="pengajuan"><span class="nav-icon">📝</span> Pengajuan SPPD</div>
     <div class="nav-item" data-view="approval"><span class="nav-icon">✅</span> Persetujuan</div>
     <div class="nav-item" data-view="dokumen"><span class="nav-icon">📄</span> Dokumen &amp; Cetak</div>
@@ -276,7 +294,7 @@ const uid = p => p + '-' + Math.random().toString(36).slice(2,8);
 
 function seedData(){
   return {
-    settings:{ tahunAnggaran:2026, batasLPJHari:5, namaInstansi:'Instansi Pemerintah Contoh', kotaInstansi:'Kupang' },
+    settings:{ tahunAnggaran:2026, batasLPJHari:5, namaInstansi:'Instansi Pemerintah Contoh', kotaInstansi:'Kupang', kalenderMode:'otomatis' },
     pegawai:[
       {id:'p1', nama:'Dr. Andreas Bimo, S.T., M.T.', nip:'197805122005011009', golongan:'IV/c', jabatan:'Sekretaris Direktorat Jenderal', kategori:'Eselon I', unit:'Sekretariat Ditjen'},
       {id:'p2', nama:'Sri Wahyuni, S.E., M.M.', nip:'198203142006042003', golongan:'IV/a', jabatan:'Kepala Bagian Perencanaan', kategori:'Eselon II', unit:'Biro Perencanaan'},
@@ -310,16 +328,27 @@ function seedData(){
     transportLokal: 196000,
     sppd:[],
     lpj:[],
+    kalenderManual:[],
     seq:1
   };
 }
 
+function normalizeData(d){
+  d = d || {};
+  d.settings = Object.assign({tahunAnggaran:new Date().getFullYear(), batasLPJHari:5, namaInstansi:'Instansi Pemerintah', kotaInstansi:'', kalenderMode:'otomatis'}, d.settings||{});
+  d.pegawai = Array.isArray(d.pegawai)?d.pegawai:[];
+  d.unitKerja = Array.isArray(d.unitKerja)?d.unitKerja:[];
+  d.sppd = Array.isArray(d.sppd)?d.sppd:[];
+  d.lpj = Array.isArray(d.lpj)?d.lpj:[];
+  d.kalenderManual = Array.isArray(d.kalenderManual)?d.kalenderManual:[];
+  return d;
+}
 function loadData(){
   try{
     const raw = localStorage.getItem(STORE_KEY);
-    if(raw){ return JSON.parse(raw); }
+    if(raw){ return normalizeData(JSON.parse(raw)); }
   }catch(e){ console.warn('storage read failed', e); }
-  const seeded = seedData();
+  const seeded = normalizeData(seedData());
   seedSppdExamples(seeded);
   saveData(seeded);
   return seeded;
@@ -406,12 +435,103 @@ function autoAdvanceByDate(d){
   });
 }
 
+function calendarAutoStatus(s){
+  const t = todayISO();
+  if(s.tanggalBerangkat > t) return 'Perencanaan';
+  if(s.tanggalBerangkat <= t && s.tanggalKembali >= t) return 'Berlangsung';
+  return 'Selesai';
+}
+function calendarStatus(s){
+  if(s.kalenderMode==='manual' && s.manualCalendarStatus) return s.manualCalendarStatus;
+  return calendarAutoStatus(s);
+}
+function calendarStatusClass(st){
+  return st==='Perencanaan'?'cal-plan':st==='Berlangsung'?'cal-live':'cal-done';
+}
+function calendarStatusIcon(st){
+  return st==='Perencanaan'?'🟡':st==='Berlangsung'?'🔵':'🟢';
+}
+function calendarDateMap(year, month){
+  const map = {};
+  DB.sppd.forEach(s=>{
+    const start = new Date(s.tanggalBerangkat+'T00:00:00');
+    const end = new Date(s.tanggalKembali+'T00:00:00');
+    const cur = new Date(start);
+    while(cur <= end){
+      if(cur.getFullYear()===year && cur.getMonth()===month){
+        const key = cur.toISOString().slice(0,10);
+        (map[key] ||= []).push(s);
+      }
+      cur.setDate(cur.getDate()+1);
+    }
+  });
+  DB.kalenderManual.forEach(e=>{
+    if(!e.tanggal) return;
+    const d = new Date(e.tanggal+'T00:00:00');
+    if(d.getFullYear()===year && d.getMonth()===month){
+      (map[e.tanggal] ||= []).push(Object.assign({isManualEvent:true}, e));
+    }
+  });
+  return map;
+}
+function escapeCsv(v){
+  return '"'+String(v??'').replace(/"/g,'""')+'"';
+}
+function parseDelimited(text){
+  const rows = text.trim().split(/\r?\n/).filter(Boolean);
+  if(!rows.length) return [];
+  const delim = rows[0].includes('\t') ? '\t' : ',';
+  return rows.map(line=>{
+    const out=[]; let cur='', quoted=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i], nx=line[i+1];
+      if(ch==='"' && quoted && nx==='"'){cur+='"';i++;continue;}
+      if(ch==='"'){quoted=!quoted;continue;}
+      if(ch===delim && !quoted){out.push(cur);cur='';} else cur+=ch;
+    }
+    out.push(cur); return out;
+  });
+}
+function importPegawaiRows(rows){
+  if(!rows.length) return 0;
+  const headers = rows[0].map(x=>String(x).trim().toLowerCase().replace(/\s+/g,'_'));
+  const aliases = {
+    nama:['nama','nama_lengkap','nama_pegawai','name'],
+    nip:['nip','nomor_induk_pegawai'],
+    golongan:['golongan','golongan_ruang','pangkat_golongan'],
+    jabatan:['jabatan','position'],
+    kategori:['kategori','kategori_tarif','kategori_tarif_sbm'],
+    unit:['unit','unit_kerja','organisasi','opd']
+  };
+  const idx = {};
+  Object.keys(aliases).forEach(k=>idx[k]=headers.findIndex(h=>aliases[k].includes(h)));
+  let added=0, updated=0;
+  rows.slice(1).forEach(r=>{
+    const get=k=>idx[k]>=0 ? String(r[idx[k]]||'').trim() : '';
+    const nama=get('nama'); if(!nama) return;
+    const data={
+      nama,
+      nip:get('nip'),
+      golongan:get('golongan') || 'III/a',
+      jabatan:get('jabatan'),
+      kategori:get('kategori') || 'Fungsional/Staf',
+      unit:get('unit') || (DB.unitKerja[0]?.nama||'')
+    };
+    const existing = DB.pegawai.find(p => data.nip && p.nip===data.nip);
+    if(existing){ Object.assign(existing,data); updated++; }
+    else { DB.pegawai.push(Object.assign({id:uid('p')},data)); added++; }
+  });
+  saveData(DB);
+  return {added,updated};
+}
+
 /* =========================================================
    Router / render
 ========================================================= */
 const VIEWS = {
   dashboard:{title:'Dashboard', sub:'Ringkasan perjalanan dinas & anggaran', render:renderDashboard},
   perencanaan:{title:'Perencanaan Perjadin', sub:'Rencana kegiatan & kebutuhan perjalanan dinas per periode', render:renderPerencanaan},
+  kalender:{title:'Kalender Perjadin', sub:'Kalender otomatis dan manual untuk perencanaan, perjalanan berlangsung, dan selesai', render:renderKalender},
   pengajuan:{title:'Pengajuan SPPD', sub:'Buat & kelola pengajuan Surat Perintah Perjalanan Dinas', render:renderPengajuan},
   approval:{title:'Persetujuan', sub:'Alur persetujuan atasan langsung & PPK/PA', render:renderApproval},
   dokumen:{title:'Dokumen & Cetak', sub:'SPPD, rincian biaya, dan kuitansi siap cetak', render:renderDokumen},
@@ -537,6 +657,7 @@ function renderDashboard(){
               </div>
             </li>`).join('') || '<div class="empty">Tidak ada jadwal mendatang</div>'}
         </ul>
+        <button class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="navigate('kalender')">📅 Buka Kalender Perjadin</button>
       </div>
     </div>
   `;
@@ -554,7 +675,7 @@ function renderPerencanaan(){
   const c = document.getElementById('content');
   const planned = DB.sppd.filter(s=>s.tanggalBerangkat>todayISO());
   c.innerHTML = `
-    <div class="alert alert-info">📋 Perencanaan perjalanan dinas disusun selektif berdasarkan prioritas & urgensi kegiatan, sejalan dengan arahan efisiensi anggaran dan pemanfaatan rapat/koordinasi daring bila memungkinkan.</div>
+    <div class="alert alert-info">⚙️ Data tanggal, pegawai, biaya, dan status dapat diisi otomatis dari data master/perhitungan atau disesuaikan manual saat membuka/edit SPPD. <br>📋 Perencanaan perjalanan dinas disusun selektif berdasarkan prioritas & urgensi kegiatan, sejalan dengan arahan efisiensi anggaran dan pemanfaatan rapat/koordinasi daring bila memungkinkan.</div>
     <div class="grid grid-3">
       ${DB.unitKerja.map(u=>{
         const rencanaUnit = planned.filter(s=>s.unitId===u.id);
@@ -581,6 +702,94 @@ function renderPerencanaan(){
     </table></div>
     <button class="btn btn-primary" style="margin-top:14px;" onclick="openSppdModal()">+ Tambah Rencana / Pengajuan SPPD</button>
   `;
+}
+
+
+/* =========================================================
+   KALENDER PERJADIN
+========================================================= */
+let calendarCursor = new Date();
+function renderKalender(){
+  const c=document.getElementById('content');
+  const y=calendarCursor.getFullYear(), m=calendarCursor.getMonth();
+  const map=calendarDateMap(y,m);
+  const first=new Date(y,m,1), last=new Date(y,m+1,0);
+  const start=first.getDay();
+  const total=Math.ceil((start+last.getDate())/7)*7;
+  const names=['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+  let cells='';
+  for(let i=0;i<total;i++){
+    const day=i-start+1;
+    const inMonth=day>=1&&day<=last.getDate();
+    const d=inMonth?new Date(y,m,day):new Date(y,m,day);
+    const iso=d.toISOString().slice(0,10);
+    const items=inMonth?(map[iso]||[]):[];
+    const isToday=iso===todayISO();
+    cells+=`<div class="cal-day ${inMonth?'':'muted'} ${isToday?'today':''}" ondblclick="${inMonth?`openCalendarDay('${iso}')`:''}">
+      <div class="cal-num">${inMonth?day:''}</div>
+      ${items.slice(0,5).map(s=>{
+        if(s.isManualEvent) return `<div class="cal-event cal-manual" title="Edit agenda manual" onclick="openManualCalendarModal('${s.id}')">📝 ${s.judul}</div>`;
+        const st=calendarStatus(s);
+        return `<div class="cal-event ${calendarStatusClass(st)}" title="Edit perjalanan" onclick="openSppdModal('${s.id}')">${calendarStatusIcon(st)} ${s.kotaTujuan} · ${pegawaiNames(s)}</div>`;
+      }).join('')}
+      ${items.length>5?`<div class="muted" style="font-size:10px;">+${items.length-5} lainnya</div>`:''}
+    </div>`;
+  }
+  c.innerHTML=`
+    <div class="card">
+      <div class="calendar-toolbar">
+        <div class="actions-row">
+          <button class="btn btn-outline btn-sm" onclick="calendarMove(-1)">← Bulan Sebelumnya</button>
+          <button class="btn btn-outline btn-sm" onclick="calendarCursor=new Date();renderKalender()">Hari Ini</button>
+          <button class="btn btn-outline btn-sm" onclick="calendarMove(1)">Bulan Berikutnya →</button>
+        </div>
+        <div style="font-size:18px;font-weight:700;">${new Date(y,m,1).toLocaleDateString('id-ID',{month:'long',year:'numeric'})}</div>
+        <button class="btn btn-primary btn-sm" onclick="openManualCalendarModal()">+ Agenda Manual</button>
+      </div>
+      <div class="calendar-legend">
+        <span>🟡 Perencanaan</span><span>🔵 Sedang Berlangsung</span><span>🟢 Selesai</span><span>📝 Agenda Manual</span>
+      </div>
+      <div class="alert alert-info" style="margin-top:12px;">Status kalender otomatis mengikuti tanggal keberangkatan dan tanggal kembali. Setiap perjalanan tetap bisa diedit manual melalui ikon/agenda pada kalender.</div>
+      <div class="calendar-grid">
+        ${names.map(n=>`<div class="cal-head">${n}</div>`).join('')}
+        ${cells}
+      </div>
+    </div>
+  `;
+}
+function calendarMove(n){ calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()+n,1); renderKalender(); }
+function openCalendarDay(iso){ openManualCalendarModal('',iso); }
+function openManualCalendarModal(id='',date=''){
+  const e=id?DB.kalenderManual.find(x=>x.id===id):null;
+  const data=e||{id:null,tanggal:date||todayISO(),judul:'',keterangan:'',status:'Perencanaan'};
+  document.getElementById('modalBox').className='modal';
+  document.getElementById('modalBox').innerHTML=`
+    <div class="modal-head"><h3>${e?'Edit':'Tambah'} Agenda Manual Kalender</h3><button class="close-x" onclick="closeModal()">✕</button></div>
+    <div class="form-grid">
+      <div><label>Tanggal</label><input type="date" id="cal_tgl" value="${data.tanggal}"></div>
+      <div><label>Status Kalender</label><select id="cal_st"><option>Perencanaan</option><option>Berlangsung</option><option>Selesai</option></select></div>
+      <div class="full"><label>Judul Agenda</label><input type="text" id="cal_judul" value="${data.judul}" placeholder="Contoh: Perjalanan konsultasi / rapat"></div>
+      <div class="full"><label>Keterangan</label><textarea id="cal_ket">${data.keterangan||''}</textarea></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+      ${e?`<button class="btn btn-danger" onclick="deleteManualCalendar('${e.id}')">Hapus</button>`:''}
+      <button class="btn btn-outline" onclick="closeModal()">Batal</button>
+      <button class="btn btn-primary" onclick="saveManualCalendar('${e?e.id:''}')">Simpan</button>
+    </div>`;
+  document.getElementById('cal_st').value=data.status||'Perencanaan';
+  document.getElementById('modalBg').classList.add('open');
+}
+function saveManualCalendar(id){
+  const data={tanggal:document.getElementById('cal_tgl').value,judul:document.getElementById('cal_judul').value.trim(),keterangan:document.getElementById('cal_ket').value.trim(),status:document.getElementById('cal_st').value};
+  if(!data.tanggal||!data.judul){toast('Tanggal dan judul wajib diisi');return;}
+  if(id) Object.assign(DB.kalenderManual.find(x=>x.id===id),data);
+  else DB.kalenderManual.push(Object.assign({id:uid('cal')},data));
+  saveData(DB); closeModal(); renderKalender(); toast('Agenda kalender disimpan');
+}
+function deleteManualCalendar(id){
+  if(!confirm('Hapus agenda manual ini?')) return;
+  DB.kalenderManual=DB.kalenderManual.filter(x=>x.id!==id);
+  saveData(DB); closeModal(); renderKalender(); toast('Agenda dihapus');
 }
 
 /* =========================================================
@@ -707,6 +916,30 @@ function openSppdModal(id){
         <label>Estimasi Biaya Tiket / Transportasi Utama (per orang, PP)</label>
         <input type="number" id="f_tiket" value="${s.biayaTiket}">
       </div>
+      <div>
+        <label>Mode Perhitungan Biaya</label>
+        <select id="f_biayaMode" onchange="toggleManualBiaya()">
+          <option value="otomatis" ${s.biayaMode!=='manual'?'selected':''}>Otomatis berdasarkan tarif</option>
+          <option value="manual" ${s.biayaMode==='manual'?'selected':''}>Manual / dapat disesuaikan</option>
+        </select>
+      </div>
+      <div>
+        <label>Mode Status Kalender</label>
+        <select id="f_kalMode" onchange="toggleManualKalenderStatus()">
+          <option value="otomatis" ${s.kalenderMode!=='manual'?'selected':''}>Otomatis berdasarkan tanggal</option>
+          <option value="manual" ${s.kalenderMode==='manual'?'selected':''}>Manual</option>
+        </select>
+      </div>
+      <div id="manualKalWrap" style="display:none;">
+        <label>Status Kalender Manual</label>
+        <select id="f_kalStatus">
+          ${['Perencanaan','Berlangsung','Selesai'].map(x=>`<option ${s.manualCalendarStatus===x?'selected':''}>${x}</option>`).join('')}
+        </select>
+      </div>
+      <div id="manualBiayaWrap" class="full" style="display:none;">
+        <label>Total Biaya Manual</label>
+        <input type="number" id="f_manualTotal" value="${s.manualTotalBiaya||s.totalBiaya||0}" min="0">
+      </div>
       <div class="full">
         <label>Catatan Tambahan</label>
         <textarea id="f_catatan">${s.catatan||''}</textarea>
@@ -725,8 +958,9 @@ function openSppdModal(id){
   `;
   document.getElementById('modalBg').classList.add('open');
   toggleZonaField();
-  ['f_unit','f_maksud','f_kota','f_moda','f_berangkat','f_kembali','f_dalamkota','f_zona','f_tier','f_tiket']
-    .forEach(id=>document.getElementById(id).addEventListener('input', updateEstimasi));
+  ['f_unit','f_maksud','f_kota','f_moda','f_berangkat','f_kembali','f_dalamkota','f_zona','f_tier','f_tiket','f_biayaMode','f_kalMode','f_kalStatus','f_manualTotal']
+    .forEach(id=>document.getElementById(id)?.addEventListener('input', updateEstimasi));
+  toggleManualBiaya(); toggleManualKalenderStatus();
   document.querySelectorAll('[id^="pg_"]').forEach(el=>el.addEventListener('change', updateEstimasi));
   updateEstimasi();
 }
@@ -752,6 +986,17 @@ function readSppdForm(){
     catatan: document.getElementById('f_catatan').value
   };
 }
+function toggleManualBiaya(){
+  const mode=document.getElementById('f_biayaMode')?.value;
+  const wrap=document.getElementById('manualBiayaWrap');
+  if(wrap) wrap.style.display=mode==='manual'?'block':'none';
+  updateEstimasi();
+}
+function toggleManualKalenderStatus(){
+  const mode=document.getElementById('f_kalMode')?.value;
+  const wrap=document.getElementById('manualKalWrap');
+  if(wrap) wrap.style.display=mode==='manual'?'block':'none';
+}
 function updateEstimasi(){
   const data = readSppdForm();
   if(!data.pegawaiIds.length || !data.tanggalBerangkat || !data.tanggalKembali){
@@ -761,6 +1006,9 @@ function updateEstimasi(){
   const temp = Object.assign({id:'tmp'}, data);
   computeBiaya(DB, temp);
   const r = temp.rincian;
+  if(data.biayaMode==='manual'){
+    temp.totalBiaya=data.manualTotalBiaya||0;
+  }
   document.getElementById('estimasiBox').innerHTML = `
     <b>Estimasi Total Biaya: ${fmtRp(temp.totalBiaya)}</b> (${temp.lama} hari, ${temp.malam} malam, ${data.pegawaiIds.length} pegawai)<br>
     <span class="muted">Uang harian: ${fmtRp(r.harianTotal)} · Representasi: ${fmtRp(r.representasiTotal)} · Penginapan: ${fmtRp(r.penginapanTotal)} · Transport lokal: ${fmtRp(r.transportLokalTotal)} · Tiket/transport utama: ${fmtRp(r.tiket)}</span>
@@ -782,6 +1030,10 @@ function saveSppd(id){
     DB.sppd.push(s);
   }
   computeBiaya(DB, s);
+  if(data.biayaMode==='manual'){
+    s.manualTotalBiaya=data.manualTotalBiaya||0;
+    s.totalBiaya=s.manualTotalBiaya;
+  }
   saveData(DB);
   closeModal();
   toast(id? 'Perubahan disimpan' : `SPPD ${s.nomor} berhasil diajukan`);
@@ -1098,7 +1350,18 @@ function renderMasterBody(){
   const el = document.getElementById('masterBody');
   if(masterTab==='pegawai'){
     el.innerHTML = `
-      <div class="toolbar"><button class="btn btn-primary btn-sm" onclick="openPegawaiModal()">+ Tambah Pegawai</button></div>
+      <div class="toolbar">
+        <button class="btn btn-primary btn-sm" onclick="openPegawaiModal()">+ Tambah Pegawai</button>
+        <button class="btn btn-outline btn-sm" onclick="downloadPegawaiTemplate()">⬇️ Template Excel</button>
+        <button class="btn btn-accent btn-sm" onclick="exportPegawaiExcel()">📤 Ekspor Excel</button>
+        <label class="btn btn-outline btn-sm" style="margin:0;cursor:pointer;">📥 Impor Excel/CSV
+          <input type="file" accept=".xlsx,.xls,.csv,.tsv,.txt,.json" style="display:none" onchange="importPegawaiFile(this.files[0])">
+        </label>
+      </div>
+      <div class="import-box" style="margin-bottom:14px;">
+        <b>Impor data pegawai otomatis</b><br>
+        <span class="muted">File Excel/CSV dapat berisi kolom: Nama, NIP, Golongan, Jabatan, Kategori, Unit Kerja. NIP yang sama akan diperbarui otomatis; NIP baru akan ditambahkan.</span>
+      </div>
       <div class="table-wrap"><table>
         <thead><tr><th>Nama</th><th>NIP</th><th>Golongan</th><th>Jabatan</th><th>Kategori Tarif</th><th>Unit Kerja</th><th></th></tr></thead>
         <tbody>${DB.pegawai.map(p=>`<tr>
@@ -1159,6 +1422,7 @@ function renderMasterBody(){
           <div><label>Kota Kedudukan</label><input type="text" value="${DB.settings.kotaInstansi}" onchange="DB.settings.kotaInstansi=this.value; saveData(DB);"></div>
           <div><label>Tahun Anggaran</label><input type="number" value="${DB.settings.tahunAnggaran}" onchange="DB.settings.tahunAnggaran=Number(this.value); saveData(DB);"></div>
           <div><label>Batas Waktu LPJ (hari kerja)</label><input type="number" value="${DB.settings.batasLPJHari}" onchange="DB.settings.batasLPJHari=Number(this.value); saveData(DB);"></div>
+          <div><label>Mode Kalender</label><select onchange="DB.settings.kalenderMode=this.value; saveData(DB); renderKalender();"><option value="otomatis" ${DB.settings.kalenderMode!=='manual'?'selected':''}>Otomatis</option><option value="manual" ${DB.settings.kalenderMode==='manual'?'selected':''}>Manual</option></select></div>
         </div>
       </div>`;
   }
@@ -1183,6 +1447,9 @@ function openPegawaiModal(id){
       <div class="full"><label>Unit Kerja</label>
         <select id="pg_unit">${DB.unitKerja.map(u=>`<option ${u.nama===p.unit?'selected':''}>${u.nama}</option>`).join('')}</select>
       </div>
+      <div class="full"><label>Mode Pengisian</label>
+        <select id="pg_mode"><option>Otomatis dari file/master</option><option>Manual</option></select>
+      </div>
     </div>
     <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
       <button class="btn btn-outline" onclick="closeModal()">Batal</button>
@@ -1199,6 +1466,52 @@ function savePegawai(id){
   saveData(DB); closeModal(); renderMasterBody(); toast('Data pegawai disimpan');
 }
 function pg(id){ return document.getElementById(id).value; }
+
+
+function downloadPegawaiTemplate(){
+  const rows=[['Nama','NIP','Golongan','Jabatan','Kategori','Unit Kerja'],
+              ['Contoh Pegawai','199001012020011001','III/a','Analis','Fungsional/Staf',DB.unitKerja[0]?.nama||'']];
+  const ws=XLSX.utils.aoa_to_sheet(rows), wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Pegawai');
+  XLSX.writeFile(wb,'Template_Data_Pegawai_SiPERJADIN.xlsx');
+}
+function exportPegawaiExcel(){
+  const rows=[['Nama','NIP','Golongan','Jabatan','Kategori','Unit Kerja'],...DB.pegawai.map(p=>[p.nama,p.nip,p.golongan,p.jabatan,p.kategori,p.unit])];
+  const ws=XLSX.utils.aoa_to_sheet(rows), wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Pegawai');
+  XLSX.writeFile(wb,'Data_Pegawai_SiPERJADIN.xlsx');
+}
+async function importPegawaiFile(file){
+  if(!file) return;
+  try{
+    const name=file.name.toLowerCase();
+    if(name.endsWith('.json')){
+      const data=JSON.parse(await file.text());
+      const rows=Array.isArray(data)?data:[];
+      let n=0;
+      rows.forEach(x=>{
+        if(!x.nama) return;
+        const existing=DB.pegawai.find(p=>x.nip&&p.nip===x.nip);
+        const d={nama:x.nama,nip:x.nip||'',golongan:x.golongan||'III/a',jabatan:x.jabatan||'',kategori:x.kategori||'Fungsional/Staf',unit:x.unit||DB.unitKerja[0]?.nama||''};
+        if(existing) Object.assign(existing,d); else DB.pegawai.push(Object.assign({id:uid('p')},d));
+        n++;
+      });
+      saveData(DB); renderMasterBody(); toast(`${n} data pegawai diproses`);
+      return;
+    }
+    const buf=await file.arrayBuffer();
+    let rows;
+    if(window.XLSX && !name.endsWith('.csv') && !name.endsWith('.tsv') && !name.endsWith('.txt')){
+      const wb=XLSX.read(buf,{type:'array'});
+      rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+    }else{
+      rows=parseDelimited(new TextDecoder().decode(buf));
+    }
+    const result=importPegawaiRows(rows);
+    renderMasterBody();
+    toast(`Impor selesai: ${result.added} baru, ${result.updated} diperbarui`);
+  }catch(e){ console.error(e); toast('File tidak dapat diproses. Periksa format kolom.'); }
+}
 
 /* =========================================================
    DASAR HUKUM
