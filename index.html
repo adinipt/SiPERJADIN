@@ -245,10 +245,8 @@ textarea{resize:vertical; min-height:64px;}
 /* Bulk selection & deletion */
 .bulk-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px;padding:9px 11px;border:1px solid var(--border);border-radius:10px;background:var(--bg);}
 .bulk-tools .bulk-count{font-size:12px;color:var(--text-soft);margin-right:auto;}
-.row-check{width:16px;height:16px;accent-color:var(--brand);}
+.row-check{width:18px;height:18px;min-width:18px;display:inline-block;accent-color:var(--brand);cursor:pointer;pointer-events:auto;vertical-align:middle;} .select-cell{user-select:none;}
 .select-cell{width:34px;text-align:center;}
-.row-check{appearance:auto!important;-webkit-appearance:checkbox!important;width:18px!important;height:18px!important;display:inline-block!important;vertical-align:middle;cursor:pointer;accent-color:var(--brand);margin:0;}
-.bulk-tools .select-all-label{font-size:12px;font-weight:700;color:var(--text);display:inline-flex;align-items:center;gap:6px;cursor:pointer;}
 .import-summary{margin-top:10px;padding:10px 12px;border-radius:9px;background:var(--accent-light);color:var(--accent);font-size:12.5px;display:none;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
@@ -503,15 +501,13 @@ function renderDashboard(){
       <div class="card">
         <h3>Jadwal Perjalanan Dinas Mendatang</h3>
         <div class="muted">5 keberangkatan terdekat</div>
-        ${bulkToolbar('sppd','SPPD mendatang')}
         <ul class="timeline" style="margin-top:10px;">
           ${upcoming.map(s=>`
             <li>
               <div class="tl-dot"></div>
-              <div class="tl-body" style="display:flex;gap:8px;align-items:flex-start;width:100%;">
-                <input class="row-check bulk-check" data-bulk-type="sppd" value="${esc(s.id)}" onchange="updateBulkCount('sppd')" title="Pilih SPPD ini">
-                <div><b>${s.kotaTujuan} — ${s.maksud}</b><br>
-                <span class="when">${fmtDate(s.tanggalBerangkat)} s.d. ${fmtDate(s.tanggalKembali)} · ${pegawaiNames(s)}</span></div>
+              <div class="tl-body">
+                <b>${s.kotaTujuan} — ${s.maksud}</b><br>
+                <span class="when">${fmtDate(s.tanggalBerangkat)} s.d. ${fmtDate(s.tanggalKembali)} · ${pegawaiNames(s)}</span>
               </div>
             </li>`).join('') || '<div class="empty">Tidak ada jadwal mendatang</div>'}
         </ul>
@@ -552,7 +548,7 @@ function renderPerencanaan(){
       <thead><tr><th class="select-cell">✓</th><th>Unit Kerja</th><th>Tujuan</th><th>Maksud</th><th>Periode</th><th>Pegawai</th><th>Estimasi Biaya</th><th>Status</th><th>Aksi</th></tr></thead>
       <tbody>
         ${planned.map(s=>`<tr>
-          <td class="select-cell"><input class="row-check bulk-check" data-bulk-type="sppd" value="${esc(s.id)}" onchange="updateBulkCount('sppd')"></td><td>${esc(unitName(s.unitId))}</td><td>${s.kotaTujuan}</td><td>${s.maksud}</td>
+          <td class="select-cell"><input type="checkbox" class="row-check bulk-check" data-bulk-type="sppd" value="${esc(s.id)}" onchange="updateBulkCount('sppd')"></td><td>${esc(unitName(s.unitId))}</td><td>${s.kotaTujuan}</td><td>${s.maksud}</td>
           <td>${fmtDate(s.tanggalBerangkat)} – ${fmtDate(s.tanggalKembali)}</td>
           <td>${pegawaiNames(s)}</td><td>${fmtRp(s.totalBiaya)}</td>
           <td><span class="badge ${statusBadgeClass(s.status)}">${s.status}</span></td><td><div class="actions-row"><button class="icon-btn" title="Lihat" onclick="viewSppd('${s.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="openSppdModal('${s.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deleteSppdAndRefresh('${s.id}','perencanaan')">🗑️</button></div></td>
@@ -613,13 +609,6 @@ function renderKalender(){
         ${names.map(n=>`<div class="cal-head">${n}</div>`).join('')}
         ${cells}
       </div>
-      <div class="section-title" style="margin-top:18px;"><h2>Daftar Data pada Bulan Ini</h2><span class="hint">Centang per baris untuk hapus sekaligus</span></div>
-      ${bulkToolbar('sppd','SPPD bulan ini')}
-      <div class="table-wrap"><table><thead><tr><th class="select-cell">✓</th><th>Tanggal</th><th>SPPD</th><th>Tujuan</th><th>Status</th><th>Aksi</th></tr></thead><tbody>
-        ${DB.sppd.filter(x=>String(x.tanggalBerangkat).slice(0,7)===`${y}-${String(m+1).padStart(2,'0')}`).map(x=>`<tr><td class="select-cell"><input class="row-check bulk-check" data-bulk-type="sppd" value="${esc(x.id)}" onchange="updateBulkCount('sppd')"></td><td>${fmtDate(x.tanggalBerangkat)}</td><td>${esc(x.nomor)}</td><td>${esc(x.kotaTujuan)}</td><td>${esc(x.status)}</td><td><button class="icon-btn" title="Lihat" onclick="viewSppd('${x.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="openSppdModal('${x.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deleteSppdAndRefresh('${x.id}','kalender')">🗑️</button></td></tr>`).join('')||'<tr><td colspan="6"><div class="empty">Tidak ada SPPD pada bulan ini.</div></td></tr>'}</tbody></table></div>
-      ${bulkToolbar('cal','agenda manual')}
-      <div class="table-wrap"><table><thead><tr><th class="select-cell">✓</th><th>Tanggal</th><th>Judul</th><th>Status</th><th>Aksi</th></tr></thead><tbody>
-        ${(DB.kalenderManual||[]).filter(x=>String(x.tanggal).slice(0,7)===`${y}-${String(m+1).padStart(2,'0')}`).map(x=>`<tr><td class="select-cell"><input class="row-check bulk-check" data-bulk-type="cal" value="${esc(x.id)}" onchange="updateBulkCount('cal')"></td><td>${fmtDate(x.tanggal)}</td><td>${esc(x.judul)}</td><td>${esc(x.status||'-')}</td><td><button class="icon-btn" title="Lihat" onclick="viewManualCalendar('${x.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="openManualCalendarModal('${x.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deleteManualCalendar('${x.id}')">🗑️</button></td></tr>`).join('')||'<tr><td colspan="5"><div class="empty">Tidak ada agenda manual pada bulan ini.</div></td></tr>'}</tbody></table></div>
     </div>
   `;
 }
@@ -692,7 +681,7 @@ function filterSppdTable(){
     .sort((a,b)=> b.tanggalBerangkat.localeCompare(a.tanggalBerangkat));
   document.getElementById('sppdTbody').innerHTML = rows.map(s=>`
     <tr>
-      <td class="select-cell"><input class="row-check bulk-check" data-bulk-type="sppd" value="${esc(s.id)}" onchange="updateBulkCount('sppd')"></td><td><b>${esc(s.nomor)}</b><br><span class="muted">${s.maksud}</span></td>
+      <td class="select-cell"><input type="checkbox" class="row-check bulk-check" data-bulk-type="sppd" value="${esc(s.id)}" onchange="updateBulkCount('sppd')"></td><td><b>${esc(s.nomor)}</b><br><span class="muted">${s.maksud}</span></td>
       <td>${pegawaiNames(s)}</td>
       <td>${s.kotaTujuan}${s.statusDalamKota?' (dalam kota)':''}</td>
       <td>${fmtDate(s.tanggalBerangkat)}<br>s.d. ${fmtDate(s.tanggalKembali)}</td>
@@ -926,7 +915,7 @@ function renderApproval(){
       <thead><tr><th class="select-cell">✓</th><th>Nomor</th><th>Pegawai</th><th>Tujuan &amp; Maksud</th><th>Periode</th><th>Biaya</th><th>Aksi</th></tr></thead>
       <tbody>
         ${list.map(s=>`<tr>
-          <td class="select-cell"><input class="row-check bulk-check" data-bulk-type="sppd" value="${esc(s.id)}" onchange="updateBulkCount('sppd')"></td><td>${esc(s.nomor)}</td><td>${pegawaiNames(s)}</td>
+          <td class="select-cell"><input type="checkbox" class="row-check bulk-check" data-bulk-type="sppd" value="${esc(s.id)}" onchange="updateBulkCount('sppd')"></td><td>${esc(s.nomor)}</td><td>${pegawaiNames(s)}</td>
           <td>${s.kotaTujuan}<br><span class="muted">${s.maksud}</span></td>
           <td>${fmtDate(s.tanggalBerangkat)} – ${fmtDate(s.tanggalKembali)}</td>
           <td>${fmtRp(s.totalBiaya)}</td>
@@ -967,7 +956,6 @@ function renderDokumen(){
   const c = document.getElementById('content');
   const opts = DB.sppd.slice().sort((a,b)=>b.tanggalBerangkat.localeCompare(a.tanggalBerangkat));
   c.innerHTML = `
-    ${bulkToolbar('sppd','SPPD untuk dokumen & cetak')}
     <div class="toolbar">
       <select id="dokSelect" onchange="selectDokumen(this.value)" style="max-width:420px;">
         ${opts.map(s=>`<option value="${s.id}">${s.nomor} — ${pegawaiNames(s)} (${s.kotaTujuan})</option>`).join('') || '<option>Belum ada SPPD</option>'}
@@ -1093,7 +1081,7 @@ function renderLpj(){
         ${needLpj.map(s=>{
           const overdue = daysBetween(s.tanggalKembali, todayISO()) > DB.settings.batasLPJHari;
           return `<tr>
-            <td class="select-cell"><input class="row-check bulk-check" data-bulk-type="sppd" value="${esc(s.id)}" onchange="updateBulkCount('sppd')"></td><td>${esc(s.nomor)}</td><td>${pegawaiNames(s)}</td><td>${fmtDate(s.tanggalKembali)}</td>
+            <td class="select-cell"><input type="checkbox" class="row-check bulk-check" data-bulk-type="sppd" value="${esc(s.id)}" onchange="updateBulkCount('sppd')"></td><td>${esc(s.nomor)}</td><td>${pegawaiNames(s)}</td><td>${fmtDate(s.tanggalKembali)}</td>
             <td>${overdue?'<span style="color:var(--danger); font-weight:700;">Lewat batas</span>':fmtDate(addBusinessDays(s.tanggalKembali, DB.settings.batasLPJHari))}</td>
             <td>${fmtRp(s.totalBiaya)}</td>
             <td><div class="actions-row"><button class="icon-btn" title="Lihat" onclick="viewSppd('${s.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="openSppdModal('${s.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deleteSppdAndRefresh('${s.id}','lpj')">🗑️</button><button class="btn btn-accent btn-sm" onclick="openLpjModal('${s.id}')">Isi LPJ</button></div></td>
@@ -1111,7 +1099,7 @@ function renderLpj(){
           const s = DB.sppd.find(x=>x.id===l.sppdId); if(!s) return '';
           const selisih = s.totalBiaya - l.biayaRiil;
           return `<tr>
-            <td class="select-cell"><input class="row-check bulk-check" data-bulk-type="lpj" value="${esc(l.id)}" onchange="updateBulkCount('lpj')"></td><td>${esc(s.nomor)}</td><td>${fmtDate(l.tanggalLapor)}</td><td>${fmtRp(s.totalBiaya)}</td><td>${fmtRp(l.biayaRiil)}</td>
+            <td class="select-cell"><input type="checkbox" class="row-check bulk-check" data-bulk-type="lpj" value="${esc(l.id)}" onchange="updateBulkCount('lpj')"></td><td>${esc(s.nomor)}</td><td>${fmtDate(l.tanggalLapor)}</td><td>${fmtRp(s.totalBiaya)}</td><td>${fmtRp(l.biayaRiil)}</td>
             <td style="color:${selisih>=0?'var(--accent)':'var(--danger)'}">${selisih>=0?'Lebih bayar':'Kurang bayar'} ${fmtRp(Math.abs(selisih))}</td>
             <td><div class="actions-row"><button class="icon-btn" title="Lihat" onclick="viewLpj('${l.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="editLpj('${l.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deleteLpj('${l.id}')">🗑️</button><button class="btn btn-outline btn-sm" onclick="verifyLpj('${l.id}')">✔ Verifikasi</button></div></td>
           </tr>`;
@@ -1124,7 +1112,7 @@ function renderLpj(){
     <div class="table-wrap"><table>
       <thead><tr><th class="select-cell">✓</th><th>Nomor SPPD</th><th>Ringkasan Hasil</th><th>Biaya Riil</th><th>Aksi</th></tr></thead>
       <tbody>
-        ${done.map(l=>{ const s = DB.sppd.find(x=>x.id===l.sppdId); if(!s) return ''; return `<tr><td class="select-cell"><input class="row-check bulk-check" data-bulk-type="lpj" value="${esc(l.id)}" onchange="updateBulkCount('lpj')"></td><td>${esc(s.nomor)}</td><td>${esc(l.ringkasan)}</td><td>${fmtRp(l.biayaRiil)}</td><td><div class="actions-row"><button class="icon-btn" title="Lihat" onclick="viewLpj('${l.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="editLpj('${l.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deleteLpj('${l.id}')">🗑️</button></div></td></tr>`; }).join('') || `<tr><td colspan="5"><div class="empty">Belum ada riwayat.</div></td></tr>`}
+        ${done.map(l=>{ const s = DB.sppd.find(x=>x.id===l.sppdId); if(!s) return ''; return `<tr><td class="select-cell"><input type="checkbox" class="row-check bulk-check" data-bulk-type="lpj" value="${esc(l.id)}" onchange="updateBulkCount('lpj')"></td><td>${esc(s.nomor)}</td><td>${esc(l.ringkasan)}</td><td>${fmtRp(l.biayaRiil)}</td><td><div class="actions-row"><button class="icon-btn" title="Lihat" onclick="viewLpj('${l.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="editLpj('${l.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deleteLpj('${l.id}')">🗑️</button></div></td></tr>`; }).join('') || `<tr><td colspan="5"><div class="empty">Belum ada riwayat.</div></td></tr>`}
       </tbody>
     </table></div>
   `;
@@ -1192,7 +1180,7 @@ function renderAnggaran(){
         ${rows.map(r=>{
           const pct = r.u.pagu ? (r.realisasi+r.komitmen)/r.u.pagu*100 : 0;
           return `<tr>
-            <td class="select-cell"><input class="row-check bulk-check" data-bulk-type="unit" value="${esc(r.u.id)}" onchange="updateBulkCount('unit')"></td><td><b>${esc(r.u.nama)}</b></td><td>${fmtRp(r.u.pagu)}</td><td>${fmtRp(r.realisasi)}</td><td>${fmtRp(r.komitmen)}</td>
+            <td class="select-cell"><input type="checkbox" class="row-check bulk-check" data-bulk-type="unit" value="${esc(r.u.id)}" onchange="updateBulkCount('unit')"></td><td><b>${esc(r.u.nama)}</b></td><td>${fmtRp(r.u.pagu)}</td><td>${fmtRp(r.realisasi)}</td><td>${fmtRp(r.komitmen)}</td>
             <td style="color:${r.sisa<0?'var(--danger)':'inherit'}">${fmtRp(r.sisa)}</td>
             <td><div class="progress-bar"><div class="progress-fill" style="width:${Math.min(100,pct)}%; background:${pct>95?'var(--danger)':pct>80?'var(--warn)':'var(--accent)'}"></div></div><span class="muted">${pct.toFixed(1)}%</span></td>
             <td><div class="actions-row"><button class="icon-btn" title="Lihat" onclick="viewUnit('${r.u.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="openUnitModal('${r.u.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deleteUnitFromAnggaran('${r.u.id}')">🗑️</button></div></td>
@@ -1208,67 +1196,70 @@ function renderAnggaran(){
    BULK SELECT / DELETE
 ========================================================= */
 function bulkToolbar(type,label='data'){
-  const labels={pegawai:'pegawai',unit:'unit kerja',sppd:'SPPD/perjalanan dinas',lpj:'LPJ',hadir:'catatan daftar hadir',cal:'agenda kalender',tarif:'nilai tarif'};
-  const nice=labels[type]||label||'data';
   return `<div class="bulk-tools" data-bulk-type="${type}">
-    <label class="select-all-label"><input class="row-check bulk-master" type="checkbox" data-bulk-type="${type}" title="Pilih semua data" onchange="toggleAllRows(this,'${type}')"> Pilih semua</label>
-    <span class="bulk-count" data-bulk-count="${type}">0 data dipilih.</span>
-    <button class="btn btn-outline btn-sm" type="button" onclick="clearBulkSelection('${type}')">☐ Batal pilih</button>
-    <button class="btn btn-danger btn-sm" type="button" onclick="bulkDelete('${type}')">🗑️ Hapus yang dicentang</button>
-    <button class="btn btn-danger btn-sm" type="button" onclick="bulkDeleteAll('${type}')">🗑️ Hapus semua ${nice}</button>
+    <input type="checkbox" class="row-check" title="Pilih semua data" onchange="toggleAllRows(this,'${type}')">
+    <span class="bulk-count" data-bulk-count="${type}">Pilih data ${label} yang akan dihapus sekaligus.</span>
+    <button class="btn btn-danger btn-sm" type="button" onclick="bulkDelete('${type}')">🗑️ Hapus yang Dicentang</button>
+    <button class="btn btn-outline btn-sm" type="button" onclick="bulkDeleteAll('${type}')">🗑️ Hapus Semua Data</button>
   </div>`;
 }
 function selectedIds(type){return Array.from(document.querySelectorAll(`.bulk-check[data-bulk-type="${type}"]:checked`)).map(x=>x.value);}
-function allRowChecks(type){return Array.from(document.querySelectorAll(`.bulk-check[data-bulk-type="${type}"]`));}
-function toggleAllRows(master,type){const checks=allRowChecks(type);checks.forEach(x=>x.checked=!!master.checked);document.querySelectorAll(`.bulk-master[data-bulk-type="${type}"]`).forEach(x=>x.checked=!!master.checked);updateBulkCount(type);}
-function clearBulkSelection(type){allRowChecks(type).forEach(x=>x.checked=false);document.querySelectorAll(`.bulk-master[data-bulk-type="${type}"]`).forEach(x=>x.checked=false);updateBulkCount(type);}
-function updateBulkCount(type){const n=selectedIds(type).length;document.querySelectorAll(`[data-bulk-count="${type}"]`).forEach(el=>el.textContent=n?`${n} data dipilih.`:'0 data dipilih.');const checks=allRowChecks(type);const masters=document.querySelectorAll(`.bulk-master[data-bulk-type="${type}"]`);masters.forEach(m=>{m.checked=checks.length>0&&checks.every(x=>x.checked);m.indeterminate=checks.some(x=>x.checked)&&!m.checked;});}
+function toggleAllRows(master,type){document.querySelectorAll(`.bulk-check[data-bulk-type="${type}"]`).forEach(x=>x.checked=!!master.checked);document.querySelectorAll(`.bulk-tools[data-bulk-type="${type}"] input.row-check[type="checkbox"]`).forEach(x=>{if(x!==master)x.checked=!!master.checked;});updateBulkCount(type);}
+function updateBulkCount(type){const n=selectedIds(type).length;document.querySelectorAll(`[data-bulk-count="${type}"]`).forEach(el=>el.textContent=n?`${n} data dipilih.`:'Pilih data yang akan dihapus sekaligus.');}
 function confirmBulkDelete(type,ids){
   const labels={pegawai:'pegawai',unit:'unit kerja',sppd:'SPPD/perjalanan dinas',lpj:'LPJ',hadir:'catatan daftar hadir',cal:'agenda kalender',tarif:'nilai tarif'};
   if(!ids.length){toast('Centang minimal satu data terlebih dahulu.');return false;}
   return confirm(`Hapus ${ids.length} ${labels[type]||'data'} yang dipilih? Tindakan ini tidak dapat dibatalkan.`);
 }
-function deleteAllForType(type){
-  if(type==='pegawai'){DB.pegawai=[];DB.kehadiran=(DB.kehadiran||[]).filter(a=>false);DB.sppd.forEach(s=>s.pegawaiIds=[]);}
-  else if(type==='unit'){DB.unitKerja=[];DB.pegawai.forEach(p=>p.unit='');DB.sppd.forEach(s=>s.unitId='');}
-  else if(type==='sppd'){DB.sppd=[];DB.lpj=[];}
-  else if(type==='lpj'){DB.lpj=[];}
-  else if(type==='hadir'){DB.kehadiran=[];}
-  else if(type==='cal'){DB.kalenderManual=[];}
-  else if(type==='tarif'){
-    Object.keys(DB.dalamKota||{}).forEach(k=>DB.dalamKota[k]=0);
-    (DB.zona||[]).forEach(z=>z.harian=0);
-    Object.keys(DB.representasi||{}).forEach(k=>DB.representasi[k]=0);
-    Object.keys(DB.penginapan||{}).forEach(k=>{['tinggi','sedang','rendah'].forEach(t=>{if(DB.penginapan[k])DB.penginapan[k][t]=0;});});
-    DB.transportLokal=0;
-  }
-}
-function bulkDeleteAll(type){
-  const labels={pegawai:'seluruh pegawai',unit:'seluruh unit kerja',sppd:'seluruh SPPD/perjalanan dinas',lpj:'seluruh LPJ',hadir:'seluruh catatan daftar hadir',cal:'seluruh agenda kalender',tarif:'seluruh nilai tarif'};
-  const counts={pegawai:DB.pegawai.length,unit:DB.unitKerja.length,sppd:DB.sppd.length,lpj:DB.lpj.length,hadir:(DB.kehadiran||[]).length,cal:(DB.kalenderManual||[]).length,tarif:1};
-  if(!confirm(`Hapus ${labels[type]||'seluruh data'}? Jumlah saat ini: ${counts[type]||0}. Tindakan ini tidak dapat dibatalkan.`))return;
-  deleteAllForType(type);saveData(DB);clearBulkSelection(type);renderCurrentViewAfterBulk(type);toast(`${labels[type]||'Data'} berhasil dihapus seluruhnya.`);
-}
 function bulkDelete(type){
   const ids=selectedIds(type);if(!confirmBulkDelete(type,ids))return;
   const set=new Set(ids);
   if(type==='pegawai'){
-    DB.pegawai=DB.pegawai.filter(p=>!set.has(p.id));DB.kehadiran=(DB.kehadiran||[]).filter(a=>!set.has(a.pegawaiId));DB.sppd.forEach(s=>s.pegawaiIds=(s.pegawaiIds||[]).filter(id=>!set.has(id)));
+    DB.pegawai=DB.pegawai.filter(p=>!set.has(p.id));
+    DB.kehadiran=(DB.kehadiran||[]).filter(a=>!set.has(a.pegawaiId));
+    DB.sppd.forEach(s=>s.pegawaiIds=(s.pegawaiIds||[]).filter(id=>!set.has(id)));
   }else if(type==='unit'){
-    const removedUnitNames=new Set(DB.unitKerja.filter(u=>set.has(u.id)).map(u=>normalizeImportText(u.nama).toLowerCase()));DB.unitKerja=DB.unitKerja.filter(u=>!set.has(u.id));DB.pegawai.forEach(p=>{if(removedUnitNames.has(normalizeImportText(p.unit||'').toLowerCase()))p.unit='';});DB.sppd.forEach(s=>{if(set.has(s.unitId))s.unitId='';});
-  }else if(type==='sppd'){DB.sppd=DB.sppd.filter(s=>!set.has(s.id));DB.lpj=DB.lpj.filter(l=>!set.has(l.sppdId));}
-  else if(type==='lpj'){DB.lpj=DB.lpj.filter(l=>!set.has(l.id));}
-  else if(type==='hadir'){DB.kehadiran=(DB.kehadiran||[]).filter(a=>!set.has(a.id));}
-  else if(type==='cal'){DB.kalenderManual=DB.kalenderManual.filter(a=>!set.has(a.id));}
-  else if(type==='tarif'){
-    set.forEach(key=>{const parts=String(key).split('|');if(parts[0]==='dalam'&&DB.dalamKota[parts[1]]!==undefined)DB.dalamKota[parts[1]]=0;else if(parts[0]==='zona'){const z=DB.zona.find(x=>x.id===parts[1]);if(z)z.harian=0;}else if(parts[0]==='rep'&&DB.representasi[parts[1]]!==undefined)DB.representasi[parts[1]]=0;else if(parts[0]==='peng'){const k=parts[1],tier=parts[2];if(DB.penginapan[k]){if(tier==='all'){DB.penginapan[k].tinggi=0;DB.penginapan[k].sedang=0;DB.penginapan[k].rendah=0;}else if(DB.penginapan[k][tier]!==undefined)DB.penginapan[k][tier]=0;}}else if(parts[0]==='transport')DB.transportLokal=0;});
+    const removedUnitNames=new Set(DB.unitKerja.filter(u=>set.has(u.id)).map(u=>normalizeImportText(u.nama).toLowerCase()));
+    DB.unitKerja=DB.unitKerja.filter(u=>!set.has(u.id));
+    DB.pegawai.forEach(p=>{if(removedUnitNames.has(normalizeImportText(p.unit||'').toLowerCase()))p.unit='';});
+  }else if(type==='sppd'){
+    DB.sppd=DB.sppd.filter(s=>!set.has(s.id));
+    DB.lpj=DB.lpj.filter(l=>!set.has(l.sppdId));
+  }else if(type==='lpj'){
+    DB.lpj=DB.lpj.filter(l=>!set.has(l.id));
+  }else if(type==='hadir'){
+    DB.kehadiran=(DB.kehadiran||[]).filter(a=>!set.has(a.id));
+  }else if(type==='cal'){
+    DB.kalenderManual=DB.kalenderManual.filter(a=>!set.has(a.id));
+  }else if(type==='tarif'){
+    set.forEach(key=>resetTarifKeySilent(key));
   }
   saveData(DB);renderCurrentViewAfterBulk(type);toast(`${ids.length} data berhasil dihapus.`);
 }
-function renderCurrentViewAfterBulk(type){if(type==='hadir'){openAttendanceView();return;}if(VIEWS[currentView])VIEWS[currentView].render();}
+function bulkDeleteAll(type){
+  const labels={pegawai:'pegawai',unit:'unit kerja',sppd:'SPPD/perjalanan dinas',lpj:'LPJ',hadir:'catatan daftar hadir',cal:'agenda kalender',tarif:'nilai tarif'};
+  const counts={pegawai:DB.pegawai?.length||0,unit:DB.unitKerja?.length||0,sppd:DB.sppd?.length||0,lpj:DB.lpj?.length||0,hadir:DB.kehadiran?.length||0,cal:DB.kalenderManual?.length||0,tarif:countTarifItems()};
+  const n=counts[type]||0;if(!n){toast(`Tidak ada ${labels[type]||'data'} untuk dihapus.`);return;}
+  if(!confirm(`Hapus SEMUA ${n} ${labels[type]||'data'}? Tindakan ini tidak dapat dibatalkan.`))return;
+  if(type==='pegawai'){DB.pegawai=[];DB.kehadiran=[];DB.sppd.forEach(s=>s.pegawaiIds=[]);}
+  else if(type==='unit'){DB.unitKerja=[];DB.pegawai.forEach(p=>p.unit='');}
+  else if(type==='sppd'){DB.sppd=[];DB.lpj=[];}
+  else if(type==='lpj'){DB.lpj=[];}
+  else if(type==='hadir'){DB.kehadiran=[];}
+  else if(type==='cal'){DB.kalenderManual=[];}
+  else if(type==='tarif'){resetAllTarifSilent();}
+  saveData(DB);renderCurrentViewAfterBulk(type);toast(`${n} ${labels[type]||'data'} berhasil dihapus.`);
+}
+function countTarifItems(){return 2+(DB.zona?.length||0)+Object.keys(DB.representasi||{}).length+Object.keys(DB.penginapan||{}).length+1;}
+function resetTarifKeySilent(key){const parts=String(key).split('|');if(parts[0]==='dalam'&&DB.dalamKota[parts[1]]!==undefined)DB.dalamKota[parts[1]]=0;else if(parts[0]==='zona'){const z=DB.zona.find(x=>x.id===parts[1]);if(z)z.harian=0;}else if(parts[0]==='rep'&&DB.representasi[parts[1]]!==undefined)DB.representasi[parts[1]]=0;else if(parts[0]==='peng'){const k=parts[1];if(DB.penginapan[k]){DB.penginapan[k].tinggi=0;DB.penginapan[k].sedang=0;DB.penginapan[k].rendah=0;}}else if(parts[0]==='transport')DB.transportLokal=0;}
+function resetAllTarifSilent(){DB.dalamKota={umum:0,diklat:0};(DB.zona||[]).forEach(z=>z.harian=0);Object.keys(DB.representasi||{}).forEach(k=>DB.representasi[k]=0);Object.keys(DB.penginapan||{}).forEach(k=>{DB.penginapan[k].tinggi=0;DB.penginapan[k].sedang=0;DB.penginapan[k].rendah=0;});DB.transportLokal=0;}
+function renderCurrentViewAfterBulk(type){
+  if(type==='hadir'){openAttendanceView();return;}
+  if(VIEWS[currentView])VIEWS[currentView].render();
+}
 function bulkCalendarManager(){
   const rows=[...(DB.kalenderManual||[])].sort((a,b)=>String(a.tanggal).localeCompare(String(b.tanggal)));
-  simpleView('Kelola & Hapus Agenda Kalender',rows.length?`${bulkToolbar('cal','agenda kalender')}<div class="table-wrap"><table><thead><tr><th class="select-cell">✓</th><th>Tanggal</th><th>Judul</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${rows.map(x=>`<tr><td class="select-cell"><input class="row-check bulk-check" data-bulk-type="cal" value="${esc(x.id)}" onchange="updateBulkCount('cal')"></td><td>${fmtDate(x.tanggal)}</td><td>${esc(x.judul)}</td><td>${esc(x.status||'-')}</td><td><button class="icon-btn" onclick="viewManualCalendar('${x.id}')">👁️</button><button class="icon-btn" onclick="openManualCalendarModal('${x.id}')">✏️</button><button class="icon-btn" onclick="deleteManualCalendar('${x.id}')">🗑️</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Belum ada agenda manual.</div>');
+  simpleView('Kelola & Hapus Agenda Kalender',rows.length?`${bulkToolbar('cal','agenda kalender')}<div class="table-wrap"><table><thead><tr><th class="select-cell">✓</th><th>Tanggal</th><th>Judul</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${rows.map(x=>`<tr><td class="select-cell"><input type="checkbox" class="row-check bulk-check" data-bulk-type="cal" value="${esc(x.id)}" onchange="updateBulkCount('cal')"></td><td>${fmtDate(x.tanggal)}</td><td>${esc(x.judul)}</td><td>${esc(x.status||'-')}</td><td><button class="icon-btn" onclick="viewManualCalendar('${x.id}')">👁️</button><button class="icon-btn" onclick="openManualCalendarModal('${x.id}')">✏️</button><button class="icon-btn" onclick="deleteManualCalendar('${x.id}')">🗑️</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Belum ada agenda manual.</div>');
 }
 
 /* =========================================================
@@ -1310,7 +1301,7 @@ function renderMasterBody(){
       <div class="table-wrap"><table>
         <thead><tr><th class="select-cell">✓</th><th>Nama</th><th>NIP</th><th>Golongan</th><th>Jabatan</th><th>Kategori Tarif</th><th>Unit Kerja</th><th></th></tr></thead>
         <tbody>${DB.pegawai.length?DB.pegawai.map(p=>`<tr>
-          <td class="select-cell"><input class="row-check bulk-check" data-bulk-type="pegawai" value="${esc(p.id)}" onchange="updateBulkCount('pegawai')"></td><td>${esc(p.nama)}</td><td>${p.nip}</td><td>${p.golongan}</td><td>${p.jabatan}</td><td>${p.kategori}</td><td>${p.unit}</td>
+          <td class="select-cell"><input type="checkbox" class="row-check bulk-check" data-bulk-type="pegawai" value="${esc(p.id)}" onchange="updateBulkCount('pegawai')"></td><td>${esc(p.nama)}</td><td>${p.nip}</td><td>${p.golongan}</td><td>${p.jabatan}</td><td>${p.kategori}</td><td>${p.unit}</td>
           <td><div class="actions-row"><button class="icon-btn" title="Lihat" onclick="viewPegawai('${p.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="openPegawaiModal('${p.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deletePegawai('${p.id}')">🗑️</button></div></td>
         </tr>`).join(''):`<tr><td colspan="8"><div class="empty">Belum ada data pegawai. Impor Excel/CSV atau tambah pegawai.</div></td></tr>`}</tbody>
       </table></div>`;
@@ -1320,7 +1311,7 @@ function renderMasterBody(){
       <div class="toolbar"><button class="btn btn-primary btn-sm" onclick="openUnitModal()">+ Tambah Unit Kerja</button></div><div class="table-wrap"><table>
         <thead><tr><th class="select-cell">✓</th><th>Unit Kerja</th><th>Pagu Anggaran Perjadin (TA ${DB.settings.tahunAnggaran})</th><th>Aksi</th></tr></thead>
         <tbody>${DB.unitKerja.length?DB.unitKerja.map(u=>`<tr>
-          <td class="select-cell"><input class="row-check bulk-check" data-bulk-type="unit" value="${esc(u.id)}" onchange="updateBulkCount('unit')"></td><td>${esc(u.nama)}</td>
+          <td class="select-cell"><input type="checkbox" class="row-check bulk-check" data-bulk-type="unit" value="${esc(u.id)}" onchange="updateBulkCount('unit')"></td><td>${esc(u.nama)}</td>
           <td><input type="number" value="${u.pagu}" onchange="updateUnitPagu('${u.id}', this.value)"></td>
           <td><div class="actions-row"><button class="icon-btn" title="Lihat" onclick="viewUnit('${u.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="openUnitModal('${u.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deleteUnit('${u.id}')">🗑️</button></div></td>
         </tr>`).join(''):`<tr><td colspan="4"><div class="empty">Belum ada unit kerja. Tambahkan unit kerja terlebih dahulu.</div></td></tr>`}</tbody>
@@ -1331,20 +1322,20 @@ function renderMasterBody(){
       ${bulkToolbar('tarif','nilai tarif yang akan dihapus/reset')}
       <h3 style="margin-bottom:6px;">Uang Harian Dalam Kota</h3>
       <div class="table-wrap tight"><table><thead><tr><th class="select-cell">✓</th><th>Komponen</th><th>Nilai</th><th>Aksi</th></tr></thead><tbody>
-        <tr><td class="select-cell"><input class="row-check bulk-check" data-bulk-type="tarif" value="dalam|umum" onchange="updateBulkCount('tarif')"></td><td>Perjalanan dinas dalam kota &gt; 8 jam</td><td style="width:160px;"><input type="number" value="${DB.dalamKota.umum}" onchange="DB.dalamKota.umum=Number(this.value); saveData(DB);"></td><td><button class="icon-btn" title="Hapus nilai" onclick="resetTarifKey('dalam|umum')">🗑️</button></td></tr>
-        <tr><td class="select-cell"><input class="row-check bulk-check" data-bulk-type="tarif" value="dalam|diklat" onchange="updateBulkCount('tarif')"></td><td>Kegiatan pendidikan &amp; pelatihan (diklat) dalam kota</td><td><input type="number" value="${DB.dalamKota.diklat}" onchange="DB.dalamKota.diklat=Number(this.value); saveData(DB);"></td><td><button class="icon-btn" title="Hapus nilai" onclick="resetTarifKey('dalam|diklat')">🗑️</button></td></tr>
+        <tr><td class="select-cell"><input type="checkbox" class="row-check bulk-check" data-bulk-type="tarif" value="dalam|umum" onchange="updateBulkCount('tarif')"></td><td>Perjalanan dinas dalam kota &gt; 8 jam</td><td style="width:160px;"><input type="number" value="${DB.dalamKota.umum}" onchange="DB.dalamKota.umum=Number(this.value); saveData(DB);"></td><td><button class="icon-btn" title="Hapus nilai" onclick="resetTarifKey('dalam|umum')">🗑️</button></td></tr>
+        <tr><td class="select-cell"><input type="checkbox" class="row-check bulk-check" data-bulk-type="tarif" value="dalam|diklat" onchange="updateBulkCount('tarif')"></td><td>Kegiatan pendidikan &amp; pelatihan (diklat) dalam kota</td><td><input type="number" value="${DB.dalamKota.diklat}" onchange="DB.dalamKota.diklat=Number(this.value); saveData(DB);"></td><td><button class="icon-btn" title="Hapus nilai" onclick="resetTarifKey('dalam|diklat')">🗑️</button></td></tr>
       </tbody></table></div>
       <h3 style="margin:18px 0 6px;">Uang Harian Luar Kota per Zona</h3>
       <div class="table-wrap tight"><table><thead><tr><th class="select-cell">✓</th><th>Zona</th><th>Nilai</th><th>Aksi</th></tr></thead><tbody>
-        ${DB.zona.map(z=>`<tr><td class="select-cell"><input class="row-check bulk-check" data-bulk-type="tarif" value="zona|${esc(z.id)}" onchange="updateBulkCount('tarif')"></td><td>${esc(z.nama)}</td><td style="width:160px;"><input type="number" value="${z.harian}" onchange="updateZona('${z.id}', this.value)"></td><td><button class="icon-btn" title="Hapus nilai" onclick="resetTarifKey('zona|${esc(z.id)}')">🗑️</button></td></tr>`).join('')}
+        ${DB.zona.map(z=>`<tr><td class="select-cell"><input type="checkbox" class="row-check bulk-check" data-bulk-type="tarif" value="zona|${esc(z.id)}" onchange="updateBulkCount('tarif')"></td><td>${esc(z.nama)}</td><td style="width:160px;"><input type="number" value="${z.harian}" onchange="updateZona('${z.id}', this.value)"></td><td><button class="icon-btn" title="Hapus nilai" onclick="resetTarifKey('zona|${esc(z.id)}')">🗑️</button></td></tr>`).join('')}
       </tbody></table></div>
       <h3 style="margin:18px 0 6px;">Uang Representasi per Hari</h3>
       <div class="table-wrap tight"><table><thead><tr><th class="select-cell">✓</th><th>Kategori</th><th>Nilai</th><th>Aksi</th></tr></thead><tbody>
-        ${Object.keys(DB.representasi).map(k=>`<tr><td class="select-cell"><input class="row-check bulk-check" data-bulk-type="tarif" value="rep|${esc(k)}" onchange="updateBulkCount('tarif')"></td><td>${esc(k)}</td><td style="width:160px;"><input type="number" value="${DB.representasi[k]}" onchange="DB.representasi['${k}']=Number(this.value); saveData(DB);"></td><td><button class="icon-btn" title="Hapus nilai" onclick="resetTarifKey('rep|${esc(k)}')">🗑️</button></td></tr>`).join('')}
+        ${Object.keys(DB.representasi).map(k=>`<tr><td class="select-cell"><input type="checkbox" class="row-check bulk-check" data-bulk-type="tarif" value="rep|${esc(k)}" onchange="updateBulkCount('tarif')"></td><td>${esc(k)}</td><td style="width:160px;"><input type="number" value="${DB.representasi[k]}" onchange="DB.representasi['${k}']=Number(this.value); saveData(DB);"></td><td><button class="icon-btn" title="Hapus nilai" onclick="resetTarifKey('rep|${esc(k)}')">🗑️</button></td></tr>`).join('')}
       </tbody></table></div>
       <h3 style="margin:18px 0 6px;">Biaya Penginapan per Malam (menurut kategori &amp; kelas kota)</h3>
       <div class="table-wrap"><table><thead><tr><th class="select-cell">✓</th><th>Kategori Pejabat/Pegawai</th><th>Kota Besar</th><th>Kota Sedang</th><th>Kota Kecil</th><th>Aksi</th></tr></thead>
-        <tbody>${Object.keys(DB.penginapan).map(k=>`<tr><td class="select-cell"><input class="row-check bulk-check" data-bulk-type="tarif" value="peng|${esc(k)}|all" onchange="updateBulkCount('tarif')"></td>
+        <tbody>${Object.keys(DB.penginapan).map(k=>`<tr><td class="select-cell"><input type="checkbox" class="row-check bulk-check" data-bulk-type="tarif" value="peng|${esc(k)}|all" onchange="updateBulkCount('tarif')"></td>
           <td>${esc(k)}</td>
           <td><input type="number" value="${DB.penginapan[k].tinggi}" onchange="DB.penginapan['${k}'].tinggi=Number(this.value); saveData(DB);"></td>
           <td><input type="number" value="${DB.penginapan[k].sedang}" onchange="DB.penginapan['${k}'].sedang=Number(this.value); saveData(DB);"></td>
@@ -1352,7 +1343,7 @@ function renderMasterBody(){
           <td><div class="actions-row"><button class="icon-btn" title="Hapus nilai kategori" onclick="resetTarifKey('peng|${esc(k)}|tinggi');resetTarifKey('peng|${esc(k)}|sedang');resetTarifKey('peng|${esc(k)}|rendah')">🗑️</button></div></td>
         </tr>`).join('')}</tbody></table></div>
       <h3 style="margin:18px 0 6px;">Transportasi Lokal (dari/ke bandara-terminal-stasiun, sekali jalan)</h3>
-      <div class="table-wrap tight"><table><thead><tr><th class="select-cell">✓</th><th>Komponen</th><th>Nilai</th><th>Aksi</th></tr></thead><tbody><tr><td class="select-cell"><input class="row-check bulk-check" data-bulk-type="tarif" value="transport|0" onchange="updateBulkCount('tarif')"></td><td>Transportasi Lokal</td><td><input type="number" style="max-width:220px;" value="${DB.transportLokal}" onchange="DB.transportLokal=Number(this.value); saveData(DB);"></td><td><button class="icon-btn" title="Hapus nilai" onclick="resetTarifKey('transport|0')">🗑️</button></td></tr></tbody></table></div>
+      <div class="table-wrap tight"><table><thead><tr><th class="select-cell">✓</th><th>Komponen</th><th>Nilai</th><th>Aksi</th></tr></thead><tbody><tr><td class="select-cell"><input type="checkbox" class="row-check bulk-check" data-bulk-type="tarif" value="transport|0" onchange="updateBulkCount('tarif')"></td><td>Transportasi Lokal</td><td><input type="number" style="max-width:220px;" value="${DB.transportLokal}" onchange="DB.transportLokal=Number(this.value); saveData(DB);"></td><td><button class="icon-btn" title="Hapus nilai" onclick="resetTarifKey('transport|0')">🗑️</button></td></tr></tbody></table></div>
     `;
   } else {
     el.innerHTML = `
@@ -1433,27 +1424,73 @@ function parseDelimited(text){
   return lines.map(line=>{const out=[];let cur='',quoted=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){if(quoted&&line[i+1]==='"'){cur+='"';i++;}else quoted=!quoted;}else if(ch===delimiter&&!quoted){out.push(cur.trim());cur='';}else cur+=ch;}out.push(cur.trim());return out;});
 }
 const IMPORT_ALIASES={
-  nama:['nama','nama_pegawai','nama_lengkap','nama_asn','nama_pns','nama_pppk','pegawai','name','nama_personil'],
-  nip:['nip','nip_pns','nip_pppk','nipppk','nomor_induk_pegawai','nomor_induk','no_nip','no_induk','nip_pegawai','nomor_induk_asn'],
-  pangkat:['pangkat','pangkat_golongan','pangkat_ruang','golongan_pangkat'],
-  gol:['golongan','golongan_ruang','gol_ruang','gol_ruang_pangkat','golongan_pangkat','gol','ruang'],
-  jab:['jabatan','jabatan_pegawai','uraian_jabatan','jabatan_struktural','jabatan_fungsional','nama_jabatan','position'],
-  unit:['unit','unit_kerja','unit_organisasi','opd','instansi','organisasi','bagian','subbagian','perangkat_daerah','satuan_kerja','satker'],
-  kat:['kategori','kategori_tarif','kategori_sbm','kategori_pegawai','gol_tarif','kelas_jabatan','kelompok_tarif'],
-  tanggal:['tanggal','tgl','tanggal_hadir','tanggal_kehadiran','hari_tanggal','tanggal_absen','date'],
-  status:['status','status_kehadiran','kehadiran','presensi','absen','keterangan','status_absen'],
-  masuk:['jam_masuk','waktu_masuk','check_in','jam_datang','waktu_datang','masuk'],
-  pulang:['jam_pulang','waktu_pulang','check_out','jam_pulang_kerja','waktu_pulang','pulang']
+  nama:['nama','nama_pegawai','nama_lengkap','nama_asn','nama_pns','nama_pppk','nama_personil','pegawai','pegawai_nama','nama_peserta','nama_karyawan','name'],
+  nip:['nip','nip_pns','nip_pppk','nipppk','nomor_induk_pegawai','nomor_induk','no_nip','no_induk','nip_pegawai','nomor_induk_asn','nip_nrk','nip_nipppk','no_nip_nipppk','nrk'],
+  pangkat:['pangkat','pangkat_golongan','pangkat_ruang','pangkat_gol','golongan_pangkat'],
+  gol:['golongan','golongan_ruang','golongan_ruang_pangkat','gol_ruang','gol_ruang_pangkat','golongan_pangkat','gol','ruang','gol_ruang'],
+  jab:['jabatan','jabatan_pegawai','uraian_jabatan','jabatan_struktural','jabatan_fungsional','nama_jabatan','jabatan_asn','posisi','position'],
+  unit:['unit','unit_kerja','unit_organisasi','unit_organisasi_kerja','opd','opd_instansi','instansi','organisasi','bagian','subbagian','perangkat_daerah','satuan_kerja','satker','nama_unit','nama_opd'],
+  kat:['kategori','kategori_tarif','kategori_sbm','kategori_pegawai','gol_tarif','kelas_jabatan','kelompok_tarif','kategori_perjalanan','tingkat'],
+  tanggal:['tanggal','tgl','tanggal_hadir','tanggal_kehadiran','hari_tanggal','tanggal_absen','tanggal_presensi','tgl_hadir','date','tanggal_masuk'],
+  status:['status','status_kehadiran','kehadiran','presensi','absen','keterangan','status_absen','status_hadir','ket','keterangan_kehadiran'],
+  masuk:['jam_masuk','waktu_masuk','check_in','checkin','jam_datang','waktu_datang','masuk','jam_masuk_kerja'],
+  pulang:['jam_pulang','waktu_pulang','check_out','checkout','jam_pulang_kerja','waktu_pulang_kerja','pulang']
 };
-function headerMatchScore(h,alias){if(h===alias)return 10;if(h.includes(alias)||alias.includes(h)&&alias.length>=5)return 3;return 0;}
-function importHeaderScore(row){let score=0;const hs=(row||[]).map(normHead);for(const aliases of Object.values(IMPORT_ALIASES))for(const h of hs)for(const a of aliases)score=Math.max(score,0)+headerMatchScore(h,a);return score;}
-function detectImportHeader(rows){let best={index:-1,score:0};for(let i=0;i<Math.min(rows.length,80);i++){const score=importHeaderScore(rows[i]||[]);const hs=(rows[i]||[]).map(normHead);const hasName=hs.some(h=>IMPORT_ALIASES.nama.some(a=>headerMatchScore(h,a)>0));const hasNip=hs.some(h=>IMPORT_ALIASES.nip.some(a=>headerMatchScore(h,a)>0));if((hasName||hasNip)&&score>best.score)best={index:i,score};}return best;}
+function headerMatchScore(h,alias){
+  if(!h||!alias)return 0;
+  if(h===alias)return 10;
+  if(h.replace(/_+/g,'').includes(alias.replace(/_+/g,'')) || alias.replace(/_+/g,'').includes(h.replace(/_+/g,'')))return alias.length>=4?5:2;
+  return 0;
+}
+function headerRowMetrics(row){
+  const hs=(row||[]).map(normHead).filter(Boolean); let score=0, matched=[];
+  for(const [key,aliases] of Object.entries(IMPORT_ALIASES)){
+    let best=0;
+    for(const h of hs) for(const a of aliases) best=Math.max(best,headerMatchScore(h,a));
+    if(best){score+=best;matched.push(key);}
+  }
+  return {score,matched};
+}
+function importHeaderScore(row){return headerRowMetrics(row).score;}
+function detectImportHeader(rows){
+  let best={index:-1,score:0,matched:[]};
+  const limit=Math.min(rows.length,120);
+  for(let i=0;i<limit;i++){
+    const m=headerRowMetrics(rows[i]||[]);
+    const hasIdentity=m.matched.includes('nama')||m.matched.includes('nip');
+    const hasAttendance=m.matched.some(k=>['tanggal','status','masuk','pulang'].includes(k));
+    const threshold=(hasIdentity&&hasAttendance)?5:(hasIdentity?4:7);
+    if(m.score>=threshold && m.score>best.score)best={index:i,score:m.score,matched:m.matched};
+  }
+  return best;
+}
 function buildImportHeader(rows,idx){
   const a=Array.isArray(rows[idx])?rows[idx]:[], b=Array.isArray(rows[idx+1])?rows[idx+1]:[];
-  const nextScore=importHeaderScore(b); const useTwo=nextScore>=6; const max=useTwo?Math.max(a.length,b.length):a.length;
+  const nextScore=importHeaderScore(b), useTwo=nextScore>=8 && nextScore>importHeaderScore(a)*0.65;
+  const max=useTwo?Math.max(a.length,b.length):a.length;
   return Array.from({length:max},(_,i)=>{const x=normalizeImportText(a[i]),y=useTwo?normalizeImportText(b[i]):'';return x&&y&&normHead(x)!==normHead(y)?`${x} ${y}`:(x||y);});
 }
-function findCol(headers,aliases){const hs=headers.map(normHead);for(const a of aliases){let i=hs.findIndex(h=>h===a);if(i>=0)return i;}for(const a of aliases){let i=hs.findIndex(h=>h.includes(a)&&a.length>=5);if(i>=0)return i;}return -1;}
+function findCol(headers,aliases){
+  const hs=headers.map(normHead);
+  for(const a of aliases){const i=hs.findIndex(h=>h===normHead(a));if(i>=0)return i;}
+  for(const a of aliases){const na=normHead(a).replace(/_+/g,'');if(na.length<4)continue;const i=hs.findIndex(h=>{const nh=h.replace(/_+/g,'');return nh===na||nh.includes(na)||na.includes(nh);});if(i>=0)return i;}
+  return -1;
+}
+function inferImportColumns(rows,headerIndex,header){
+  const ix={};Object.keys(IMPORT_ALIASES).forEach(k=>ix[k]=findCol(header,IMPORT_ALIASES[k]));
+  // Fallback: infer columns from actual cell values when headers are abbreviated or absent.
+  const sample=rows.slice(headerIndex+1,Math.min(rows.length,headerIndex+31));
+  const stats=header.map((_,i)=>{const vals=sample.map(r=>normalizeImportText(r?.[i])).filter(Boolean);return {i,vals};});
+  const nameLike=v=>{const s=normalizeImportText(v);return s&&/[A-Za-zÀ-ž]/.test(s)&&!/^\d/.test(s)&&s.split(/\s+/).length>=2&&!/^(hadir|izin|sakit|cuti|alpa|alpha|total|jumlah|rekap)$/i.test(s);};
+  const nipLike=v=>/^\d{15,20}$/.test(normalizeNip(v));
+  const dateLike=v=>!!normalizeImportedDate(v);
+  const statusLike=v=>/^(hadir|izin|sakit|cuti|alpa|alpha|dinas|tanpa\s*keterangan)$/i.test(normalizeImportText(v));
+  if(ix.nip<0){const c=stats.find(x=>x.vals.some(nipLike));if(c)ix.nip=c.i;}
+  if(ix.nama<0){const candidates=stats.filter(x=>x.i!==ix.nip&&x.vals.some(nameLike));candidates.sort((a,b)=>b.vals.filter(nameLike).length-a.vals.filter(nameLike).length);if(candidates[0])ix.nama=candidates[0].i;}
+  if(ix.tanggal<0){const c=stats.find(x=>x.i!==ix.nip&&x.vals.filter(dateLike).length>=Math.max(1,Math.ceil(x.vals.length*.5)));if(c)ix.tanggal=c.i;}
+  if(ix.status<0){const c=stats.find(x=>x.i!==ix.nama&&x.i!==ix.nip&&x.vals.filter(statusLike).length>=Math.max(1,Math.ceil(x.vals.length*.5)));if(c)ix.status=c.i;}
+  return ix;
+}
 function normalizeNip(v){let s=normalizeImportText(v).replace(/^['`]/,'').replace(/[ .\-\/]/g,'');if(!s)return '';const m=s.match(/(?:^|\D)(\d{15,20})(?:\D|$)/);return m?m[1]:'';}
 function extractNipFromText(v){const m=normalizeImportText(v).match(/(?:^|\D)(\d{15,20})(?:\D|$)/);return m?m[1]:'';}
 function cleanName(v){let s=normalizeImportText(v);s=s.replace(/^\s*(?:no|nomor)\s*[.)\-:]?\s*/i,'').replace(/^\d+[.)\-:]\s*/,'').replace(/\s*\|\s*\d{15,20}\s*$/,'').trim();return s;}
@@ -1479,7 +1516,12 @@ function nextImportFrame(){return new Promise(resolve=>setTimeout(resolve,0));}
 async function importAttendanceRows(rows){
   if(!Array.isArray(rows)||!rows.length)return{added:0,updated:0,attendanceNew:0,attendanceUpdated:0,rows:0};
   const hd=detectImportHeader(rows);if(hd.index<0||hd.score<8)return{invalid:true};
-  const header=buildImportHeader(rows,hd.index),ix={};Object.keys(IMPORT_ALIASES).forEach(k=>ix[k]=findCol(header,IMPORT_ALIASES[k]));
+  const header=buildImportHeader(rows,hd.index);const ix=inferImportColumns(rows,hd.index,header);
+  if(ix.nama<0&&ix.nip<0){
+    // One more fallback: treat the first text-heavy column as Nama and any 15-20 digit column as NIP.
+    const sample=rows.slice(hd.index+1,Math.min(rows.length,hd.index+21));
+    for(let c=0;c<header.length;c++){const vals=sample.map(r=>normalizeImportText(r?.[c])).filter(Boolean);if(ix.nip<0&&vals.some(v=>/^\d{15,20}$/.test(normalizeNip(v))))ix.nip=c;if(ix.nama<0&&vals.filter(v=>/[A-Za-z]/.test(v)&&v.split(/\s+/).length>=2).length>=2)ix.nama=c;}
+  }
   if(ix.nama<0&&ix.nip<0)return{invalid:true};
   let added=0,updated=0,attendanceNew=0,attendanceUpdated=0,processed=0,skipped=0;
   const dataRows=rows.slice(hd.index+1);
@@ -1490,6 +1532,9 @@ async function importAttendanceRows(rows){
       const rawJoined=row.map(normalizeImportText).join(' ');if(/^(total|jumlah|rekap|grand_total)\b/i.test(rawJoined))continue;
       let nip=ix.nip>=0?normalizeNip(getImportCell(row,ix.nip)):'';if(!nip)nip=extractNipFromText(rawJoined);
       let nama=ix.nama>=0?cleanName(getImportCell(row,ix.nama)):'';
+      // Jika satu kolom berisi 'Nama / NIP', pisahkan otomatis menjadi dua data.
+      if(ix.nama>=0 && ix.nama===ix.nip){const combined=getImportCell(row,ix.nama);const embedded=extractNipFromText(combined);if(embedded){nip=embedded;nama=cleanName(combined.replace(embedded,' ').replace(/[|,;:\-]+/g,' ').trim());}}
+      if(nama && extractNipFromText(nama)){const embedded=extractNipFromText(nama);if(!nip)nip=embedded;nama=cleanName(nama.replace(embedded,' ').replace(/[|,;:\-]+/g,' ').trim());}
       if(!nama||isBadName(nama)){const candidates=[];row.forEach((v,i)=>{if([ix.nip,ix.gol,ix.pangkat,ix.jab,ix.unit,ix.kat,ix.tanggal,ix.status,ix.masuk,ix.pulang].includes(i))return;const x=cleanName(v);if(x&&!isBadName(x))candidates.push(x);});nama=candidates[0]||'';}
       if(!nama&&!nip){skipped++;continue;} if(isBadName(nama)&&!nip){skipped++;continue;}
       const old=(nip&&DB.pegawai.find(x=>normalizeNip(x.nip)===nip))||(nama&&DB.pegawai.find(x=>normalizeImportText(x.nama).toLowerCase()===normalizeImportText(nama).toLowerCase()));
@@ -1509,8 +1554,8 @@ async function importPegawaiFile(file){
   if(!file)return;showImportLoading('Membaca file…','Menyiapkan data untuk diproses.',5);
   try{const name=(file.name||'').toLowerCase();let rows=[];
     if(name.endsWith('.json')){const j=JSON.parse(await file.text());if(Array.isArray(j)&&j.length){const keys=[...new Set(j.flatMap(x=>Object.keys(x||{})))];rows=[keys,...j.map(x=>keys.map(k=>x?.[k]??''))];}}
-    else{const buf=await file.arrayBuffer();const isText=/\.(csv|tsv|txt)$/i.test(name);if(!isText){if(!window.XLSX)throw new Error('Library Excel belum termuat. Silakan tunggu halaman selesai dimuat lalu coba lagi.');const wb=XLSX.read(buf,{type:'array',cellDates:true,raw:false});let ws=null;for(const sn of wb.SheetNames){const candidate=wb.Sheets[sn];const test=XLSX.utils.sheet_to_json(candidate,{header:1,defval:'',raw:false,blankrows:false});if(test.length){ws=candidate;break;}}if(!ws)throw new Error('Tidak ditemukan tabel pada file Excel.');rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false,blankrows:false});}else rows=parseDelimited(new TextDecoder('utf-8').decode(buf));}
-    showImportLoading('Menganalisis struktur data…','Menentukan posisi setiap kolom dan memeriksa data pegawai.',15);await nextImportFrame();const r=await importAttendanceRows(rows);if(r.invalid){hideImportLoading();toast('Data terbaca, tetapi header Nama/NIP tidak dikenali. Tidak ada data yang dimasukkan.');return;}renderMasterBody();hideImportLoading();toast(`Impor: ${r.added} baru, ${r.updated} diperbarui, ${r.attendanceNew+r.attendanceUpdated} catatan hadir`);
+    else{const buf=await file.arrayBuffer();const isText=/\.(csv|tsv|txt)$/i.test(name);if(!isText){if(!window.XLSX)throw new Error('Library Excel belum termuat. Silakan tunggu halaman selesai dimuat lalu coba lagi.');const wb=XLSX.read(buf,{type:'array',cellDates:true,raw:false});let ws=null,bestSheetScore=-1;for(const sn of wb.SheetNames){const candidate=wb.Sheets[sn];const test=XLSX.utils.sheet_to_json(candidate,{header:1,defval:'',raw:false,blankrows:false});if(!test.length)continue;const local=detectImportHeader(test);const score=local.index>=0?local.score:importHeaderScore(test[0]||[]);if(score>bestSheetScore){bestSheetScore=score;ws=candidate;rows=test;}}if(!ws)throw new Error('Tidak ditemukan tabel pada file Excel.');}else rows=parseDelimited(new TextDecoder('utf-8').decode(buf));}
+    showImportLoading('Menganalisis struktur data…','Menentukan posisi setiap kolom dan memeriksa data pegawai.',15);await nextImportFrame();const r=await importAttendanceRows(rows);if(r.invalid){hideImportLoading();toast('Data terbaca, tetapi kolom pegawai belum dikenali. Sistem membutuhkan kolom Nama atau NIP. Coba gunakan file dengan kolom Nama/NIP pada tabel.');return;}renderMasterBody();hideImportLoading();toast(`Impor: ${r.added} baru, ${r.updated} diperbarui, ${r.attendanceNew+r.attendanceUpdated} catatan hadir`);
   }catch(e){console.error(e);hideImportLoading();toast(`Impor gagal: ${e.message||'format file tidak dikenali'}`);}
 }
 
@@ -1528,7 +1573,7 @@ function editLpj(id){const l=DB.lpj.find(x=>x.id===id);if(!l)return;document.get
 function saveLpjEdit(id){const l=DB.lpj.find(x=>x.id===id);l.tanggalLapor=document.getElementById('le_t').value;l.ringkasan=document.getElementById('le_r').value;l.biayaRiil=Number(document.getElementById('le_b').value)||0;saveData(DB);closeModal();renderLpj();}
 function deleteLpj(id){if(!confirm('Hapus LPJ ini?'))return;DB.lpj=DB.lpj.filter(x=>x.id!==id);saveData(DB);renderLpj();toast('LPJ dihapus');}
 function normHead(v){return String(v??'').trim().toLowerCase().replace(/[\s\-\/]+/g,'_').replace(/[()]/g,'');}
-function openAttendanceView(){const a=DB.kehadiran||[];simpleView('Riwayat Daftar Hadir',a.length?`${bulkToolbar('hadir','catatan hadir')}<div class="table-wrap"><table><thead><tr><th class="select-cell">✓</th><th>Tanggal</th><th>Nama</th><th>NIP</th><th>Status</th><th>Masuk</th><th>Pulang</th><th>Aksi</th></tr></thead><tbody>${a.slice().reverse().map(x=>`<tr><td class="select-cell"><input class="row-check bulk-check" data-bulk-type="hadir" value="${esc(x.id)}" onchange="updateBulkCount('hadir')"></td><td>${fmtDate(x.tanggal)}</td><td>${esc(x.nama)}</td><td>${esc(x.nip)}</td><td>${esc(x.status)}</td><td>${esc(x.jamMasuk||'-')}</td><td>${esc(x.jamPulang||'-')}</td><td><button class="icon-btn" title="Lihat" onclick="viewAttendance('${x.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="editAttendance('${x.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deleteAttendance('${x.id}')">🗑️</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Belum ada daftar hadir.</div>');}
+function openAttendanceView(){const a=DB.kehadiran||[];simpleView('Riwayat Daftar Hadir',a.length?`${bulkToolbar('hadir','catatan hadir')}<div class="table-wrap"><table><thead><tr><th class="select-cell">✓</th><th>Tanggal</th><th>Nama</th><th>NIP</th><th>Status</th><th>Masuk</th><th>Pulang</th><th>Aksi</th></tr></thead><tbody>${a.slice().reverse().map(x=>`<tr><td class="select-cell"><input type="checkbox" class="row-check bulk-check" data-bulk-type="hadir" value="${esc(x.id)}" onchange="updateBulkCount('hadir')"></td><td>${fmtDate(x.tanggal)}</td><td>${esc(x.nama)}</td><td>${esc(x.nip)}</td><td>${esc(x.status)}</td><td>${esc(x.jamMasuk||'-')}</td><td>${esc(x.jamPulang||'-')}</td><td><button class="icon-btn" title="Lihat" onclick="viewAttendance('${x.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="editAttendance('${x.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deleteAttendance('${x.id}')">🗑️</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Belum ada daftar hadir.</div>');}
 function viewAttendance(id){const x=DB.kehadiran.find(v=>v.id===id);if(x)simpleView('Lihat Kehadiran',`<b>Nama:</b> ${esc(x.nama)}<br><b>NIP:</b> ${esc(x.nip)}<br><b>Tanggal:</b> ${fmtDate(x.tanggal)}<br><b>Status:</b> ${esc(x.status)}<br><b>Masuk:</b> ${esc(x.jamMasuk||'-')}<br><b>Pulang:</b> ${esc(x.jamPulang||'-')}`);}
 function editAttendance(id){const x=DB.kehadiran.find(v=>v.id===id);if(!x)return;document.getElementById('modalBox').className='modal';document.getElementById('modalBox').innerHTML=`<div class="modal-head"><h3>Edit Kehadiran</h3><button class="close-x" onclick="closeModal()">✕</button></div><label>Tanggal</label><input type="date" id="ae_t" value="${x.tanggal}"><div style="height:8px"></div><label>Status</label><input id="ae_s" value="${esc(x.status)}"><div style="height:8px"></div><label>Jam Masuk</label><input id="ae_i" value="${esc(x.jamMasuk||'')}"><div style="height:8px"></div><label>Jam Pulang</label><input id="ae_o" value="${esc(x.jamPulang||'')}"><div style="text-align:right;margin-top:14px"><button class="btn btn-primary" onclick="saveAttendance('${id}')">Simpan</button></div>`;document.getElementById('modalBg').classList.add('open');}
 function saveAttendance(id){const x=DB.kehadiran.find(v=>v.id===id);x.tanggal=document.getElementById('ae_t').value;x.status=document.getElementById('ae_s').value;x.jamMasuk=document.getElementById('ae_i').value;x.jamPulang=document.getElementById('ae_o').value;saveData(DB);closeModal();openAttendanceView();}
