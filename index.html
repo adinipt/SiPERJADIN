@@ -247,6 +247,8 @@ textarea{resize:vertical; min-height:64px;}
 .bulk-tools .bulk-count{font-size:12px;color:var(--text-soft);margin-right:auto;}
 .row-check{width:16px;height:16px;accent-color:var(--brand);}
 .select-cell{width:34px;text-align:center;}
+.row-check{appearance:auto!important;-webkit-appearance:checkbox!important;width:18px!important;height:18px!important;display:inline-block!important;vertical-align:middle;cursor:pointer;accent-color:var(--brand);margin:0;}
+.bulk-tools .select-all-label{font-size:12px;font-weight:700;color:var(--text);display:inline-flex;align-items:center;gap:6px;cursor:pointer;}
 .import-summary{margin-top:10px;padding:10px 12px;border-radius:9px;background:var(--accent-light);color:var(--accent);font-size:12.5px;display:none;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
@@ -501,13 +503,15 @@ function renderDashboard(){
       <div class="card">
         <h3>Jadwal Perjalanan Dinas Mendatang</h3>
         <div class="muted">5 keberangkatan terdekat</div>
+        ${bulkToolbar('sppd','SPPD mendatang')}
         <ul class="timeline" style="margin-top:10px;">
           ${upcoming.map(s=>`
             <li>
               <div class="tl-dot"></div>
-              <div class="tl-body">
-                <b>${s.kotaTujuan} — ${s.maksud}</b><br>
-                <span class="when">${fmtDate(s.tanggalBerangkat)} s.d. ${fmtDate(s.tanggalKembali)} · ${pegawaiNames(s)}</span>
+              <div class="tl-body" style="display:flex;gap:8px;align-items:flex-start;width:100%;">
+                <input class="row-check bulk-check" data-bulk-type="sppd" value="${esc(s.id)}" onchange="updateBulkCount('sppd')" title="Pilih SPPD ini">
+                <div><b>${s.kotaTujuan} — ${s.maksud}</b><br>
+                <span class="when">${fmtDate(s.tanggalBerangkat)} s.d. ${fmtDate(s.tanggalKembali)} · ${pegawaiNames(s)}</span></div>
               </div>
             </li>`).join('') || '<div class="empty">Tidak ada jadwal mendatang</div>'}
         </ul>
@@ -609,6 +613,13 @@ function renderKalender(){
         ${names.map(n=>`<div class="cal-head">${n}</div>`).join('')}
         ${cells}
       </div>
+      <div class="section-title" style="margin-top:18px;"><h2>Daftar Data pada Bulan Ini</h2><span class="hint">Centang per baris untuk hapus sekaligus</span></div>
+      ${bulkToolbar('sppd','SPPD bulan ini')}
+      <div class="table-wrap"><table><thead><tr><th class="select-cell">✓</th><th>Tanggal</th><th>SPPD</th><th>Tujuan</th><th>Status</th><th>Aksi</th></tr></thead><tbody>
+        ${DB.sppd.filter(x=>String(x.tanggalBerangkat).slice(0,7)===`${y}-${String(m+1).padStart(2,'0')}`).map(x=>`<tr><td class="select-cell"><input class="row-check bulk-check" data-bulk-type="sppd" value="${esc(x.id)}" onchange="updateBulkCount('sppd')"></td><td>${fmtDate(x.tanggalBerangkat)}</td><td>${esc(x.nomor)}</td><td>${esc(x.kotaTujuan)}</td><td>${esc(x.status)}</td><td><button class="icon-btn" title="Lihat" onclick="viewSppd('${x.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="openSppdModal('${x.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deleteSppdAndRefresh('${x.id}','kalender')">🗑️</button></td></tr>`).join('')||'<tr><td colspan="6"><div class="empty">Tidak ada SPPD pada bulan ini.</div></td></tr>'}</tbody></table></div>
+      ${bulkToolbar('cal','agenda manual')}
+      <div class="table-wrap"><table><thead><tr><th class="select-cell">✓</th><th>Tanggal</th><th>Judul</th><th>Status</th><th>Aksi</th></tr></thead><tbody>
+        ${(DB.kalenderManual||[]).filter(x=>String(x.tanggal).slice(0,7)===`${y}-${String(m+1).padStart(2,'0')}`).map(x=>`<tr><td class="select-cell"><input class="row-check bulk-check" data-bulk-type="cal" value="${esc(x.id)}" onchange="updateBulkCount('cal')"></td><td>${fmtDate(x.tanggal)}</td><td>${esc(x.judul)}</td><td>${esc(x.status||'-')}</td><td><button class="icon-btn" title="Lihat" onclick="viewManualCalendar('${x.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="openManualCalendarModal('${x.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deleteManualCalendar('${x.id}')">🗑️</button></td></tr>`).join('')||'<tr><td colspan="5"><div class="empty">Tidak ada agenda manual pada bulan ini.</div></td></tr>'}</tbody></table></div>
     </div>
   `;
 }
@@ -956,6 +967,7 @@ function renderDokumen(){
   const c = document.getElementById('content');
   const opts = DB.sppd.slice().sort((a,b)=>b.tanggalBerangkat.localeCompare(a.tanggalBerangkat));
   c.innerHTML = `
+    ${bulkToolbar('sppd','SPPD untuk dokumen & cetak')}
     <div class="toolbar">
       <select id="dokSelect" onchange="selectDokumen(this.value)" style="max-width:420px;">
         ${opts.map(s=>`<option value="${s.id}">${s.nomor} — ${pegawaiNames(s)} (${s.kotaTujuan})</option>`).join('') || '<option>Belum ada SPPD</option>'}
@@ -1196,56 +1208,64 @@ function renderAnggaran(){
    BULK SELECT / DELETE
 ========================================================= */
 function bulkToolbar(type,label='data'){
+  const labels={pegawai:'pegawai',unit:'unit kerja',sppd:'SPPD/perjalanan dinas',lpj:'LPJ',hadir:'catatan daftar hadir',cal:'agenda kalender',tarif:'nilai tarif'};
+  const nice=labels[type]||label||'data';
   return `<div class="bulk-tools" data-bulk-type="${type}">
-    <input class="row-check" type="checkbox" title="Pilih semua" onchange="toggleAllRows(this,'${type}')">
-    <span class="bulk-count" id="bulkCount_${type}">Pilih data ${label} yang akan dihapus sekaligus.</span>
-    <button class="btn btn-danger btn-sm" type="button" onclick="bulkDelete('${type}')">🗑️ Hapus yang Dicentang</button>
+    <label class="select-all-label"><input class="row-check bulk-master" type="checkbox" data-bulk-type="${type}" title="Pilih semua data" onchange="toggleAllRows(this,'${type}')"> Pilih semua</label>
+    <span class="bulk-count" data-bulk-count="${type}">0 data dipilih.</span>
+    <button class="btn btn-outline btn-sm" type="button" onclick="clearBulkSelection('${type}')">☐ Batal pilih</button>
+    <button class="btn btn-danger btn-sm" type="button" onclick="bulkDelete('${type}')">🗑️ Hapus yang dicentang</button>
+    <button class="btn btn-danger btn-sm" type="button" onclick="bulkDeleteAll('${type}')">🗑️ Hapus semua ${nice}</button>
   </div>`;
 }
 function selectedIds(type){return Array.from(document.querySelectorAll(`.bulk-check[data-bulk-type="${type}"]:checked`)).map(x=>x.value);}
-function toggleAllRows(master,type){document.querySelectorAll(`.bulk-check[data-bulk-type="${type}"]`).forEach(x=>x.checked=master.checked);updateBulkCount(type);}
-function updateBulkCount(type){const n=selectedIds(type).length;const el=document.getElementById(`bulkCount_${type}`);if(el)el.textContent=n?`${n} data dipilih.`:'Pilih data yang akan dihapus sekaligus.';}
+function allRowChecks(type){return Array.from(document.querySelectorAll(`.bulk-check[data-bulk-type="${type}"]`));}
+function toggleAllRows(master,type){const checks=allRowChecks(type);checks.forEach(x=>x.checked=!!master.checked);document.querySelectorAll(`.bulk-master[data-bulk-type="${type}"]`).forEach(x=>x.checked=!!master.checked);updateBulkCount(type);}
+function clearBulkSelection(type){allRowChecks(type).forEach(x=>x.checked=false);document.querySelectorAll(`.bulk-master[data-bulk-type="${type}"]`).forEach(x=>x.checked=false);updateBulkCount(type);}
+function updateBulkCount(type){const n=selectedIds(type).length;document.querySelectorAll(`[data-bulk-count="${type}"]`).forEach(el=>el.textContent=n?`${n} data dipilih.`:'0 data dipilih.');const checks=allRowChecks(type);const masters=document.querySelectorAll(`.bulk-master[data-bulk-type="${type}"]`);masters.forEach(m=>{m.checked=checks.length>0&&checks.every(x=>x.checked);m.indeterminate=checks.some(x=>x.checked)&&!m.checked;});}
 function confirmBulkDelete(type,ids){
   const labels={pegawai:'pegawai',unit:'unit kerja',sppd:'SPPD/perjalanan dinas',lpj:'LPJ',hadir:'catatan daftar hadir',cal:'agenda kalender',tarif:'nilai tarif'};
   if(!ids.length){toast('Centang minimal satu data terlebih dahulu.');return false;}
   return confirm(`Hapus ${ids.length} ${labels[type]||'data'} yang dipilih? Tindakan ini tidak dapat dibatalkan.`);
 }
+function deleteAllForType(type){
+  if(type==='pegawai'){DB.pegawai=[];DB.kehadiran=(DB.kehadiran||[]).filter(a=>false);DB.sppd.forEach(s=>s.pegawaiIds=[]);}
+  else if(type==='unit'){DB.unitKerja=[];DB.pegawai.forEach(p=>p.unit='');DB.sppd.forEach(s=>s.unitId='');}
+  else if(type==='sppd'){DB.sppd=[];DB.lpj=[];}
+  else if(type==='lpj'){DB.lpj=[];}
+  else if(type==='hadir'){DB.kehadiran=[];}
+  else if(type==='cal'){DB.kalenderManual=[];}
+  else if(type==='tarif'){
+    Object.keys(DB.dalamKota||{}).forEach(k=>DB.dalamKota[k]=0);
+    (DB.zona||[]).forEach(z=>z.harian=0);
+    Object.keys(DB.representasi||{}).forEach(k=>DB.representasi[k]=0);
+    Object.keys(DB.penginapan||{}).forEach(k=>{['tinggi','sedang','rendah'].forEach(t=>{if(DB.penginapan[k])DB.penginapan[k][t]=0;});});
+    DB.transportLokal=0;
+  }
+}
+function bulkDeleteAll(type){
+  const labels={pegawai:'seluruh pegawai',unit:'seluruh unit kerja',sppd:'seluruh SPPD/perjalanan dinas',lpj:'seluruh LPJ',hadir:'seluruh catatan daftar hadir',cal:'seluruh agenda kalender',tarif:'seluruh nilai tarif'};
+  const counts={pegawai:DB.pegawai.length,unit:DB.unitKerja.length,sppd:DB.sppd.length,lpj:DB.lpj.length,hadir:(DB.kehadiran||[]).length,cal:(DB.kalenderManual||[]).length,tarif:1};
+  if(!confirm(`Hapus ${labels[type]||'seluruh data'}? Jumlah saat ini: ${counts[type]||0}. Tindakan ini tidak dapat dibatalkan.`))return;
+  deleteAllForType(type);saveData(DB);clearBulkSelection(type);renderCurrentViewAfterBulk(type);toast(`${labels[type]||'Data'} berhasil dihapus seluruhnya.`);
+}
 function bulkDelete(type){
   const ids=selectedIds(type);if(!confirmBulkDelete(type,ids))return;
   const set=new Set(ids);
   if(type==='pegawai'){
-    DB.pegawai=DB.pegawai.filter(p=>!set.has(p.id));
-    DB.kehadiran=(DB.kehadiran||[]).filter(a=>!set.has(a.pegawaiId));
-    DB.sppd.forEach(s=>s.pegawaiIds=(s.pegawaiIds||[]).filter(id=>!set.has(id)));
+    DB.pegawai=DB.pegawai.filter(p=>!set.has(p.id));DB.kehadiran=(DB.kehadiran||[]).filter(a=>!set.has(a.pegawaiId));DB.sppd.forEach(s=>s.pegawaiIds=(s.pegawaiIds||[]).filter(id=>!set.has(id)));
   }else if(type==='unit'){
-    const removedUnitNames=new Set(DB.unitKerja.filter(u=>set.has(u.id)).map(u=>normalizeImportText(u.nama).toLowerCase()));
-    DB.unitKerja=DB.unitKerja.filter(u=>!set.has(u.id));
-    DB.pegawai.forEach(p=>{if(removedUnitNames.has(normalizeImportText(p.unit||'').toLowerCase()))p.unit='';});
-  }else if(type==='sppd'){
-    DB.sppd=DB.sppd.filter(s=>!set.has(s.id));
-    DB.lpj=DB.lpj.filter(l=>!set.has(l.sppdId));
-  }else if(type==='lpj'){
-    DB.lpj=DB.lpj.filter(l=>!set.has(l.id));
-  }else if(type==='hadir'){
-    DB.kehadiran=(DB.kehadiran||[]).filter(a=>!set.has(a.id));
-  }else if(type==='cal'){
-    DB.kalenderManual=DB.kalenderManual.filter(a=>!set.has(a.id));
-  }else if(type==='tarif'){
-    set.forEach(key=>{
-      const parts=String(key).split('|');
-      if(parts[0]==='dalam' && DB.dalamKota[parts[1]]!==undefined)DB.dalamKota[parts[1]]=0;
-      else if(parts[0]==='zona'){const z=DB.zona.find(x=>x.id===parts[1]);if(z)z.harian=0;}
-      else if(parts[0]==='rep' && DB.representasi[parts[1]]!==undefined)DB.representasi[parts[1]]=0;
-      else if(parts[0]==='peng'){const k=parts[1],tier=parts[2];if(DB.penginapan[k]){if(tier==='all'){DB.penginapan[k].tinggi=0;DB.penginapan[k].sedang=0;DB.penginapan[k].rendah=0;}else if(DB.penginapan[k][tier]!==undefined)DB.penginapan[k][tier]=0;}}
-      else if(parts[0]==='transport')DB.transportLokal=0;
-    });
+    const removedUnitNames=new Set(DB.unitKerja.filter(u=>set.has(u.id)).map(u=>normalizeImportText(u.nama).toLowerCase()));DB.unitKerja=DB.unitKerja.filter(u=>!set.has(u.id));DB.pegawai.forEach(p=>{if(removedUnitNames.has(normalizeImportText(p.unit||'').toLowerCase()))p.unit='';});DB.sppd.forEach(s=>{if(set.has(s.unitId))s.unitId='';});
+  }else if(type==='sppd'){DB.sppd=DB.sppd.filter(s=>!set.has(s.id));DB.lpj=DB.lpj.filter(l=>!set.has(l.sppdId));}
+  else if(type==='lpj'){DB.lpj=DB.lpj.filter(l=>!set.has(l.id));}
+  else if(type==='hadir'){DB.kehadiran=(DB.kehadiran||[]).filter(a=>!set.has(a.id));}
+  else if(type==='cal'){DB.kalenderManual=DB.kalenderManual.filter(a=>!set.has(a.id));}
+  else if(type==='tarif'){
+    set.forEach(key=>{const parts=String(key).split('|');if(parts[0]==='dalam'&&DB.dalamKota[parts[1]]!==undefined)DB.dalamKota[parts[1]]=0;else if(parts[0]==='zona'){const z=DB.zona.find(x=>x.id===parts[1]);if(z)z.harian=0;}else if(parts[0]==='rep'&&DB.representasi[parts[1]]!==undefined)DB.representasi[parts[1]]=0;else if(parts[0]==='peng'){const k=parts[1],tier=parts[2];if(DB.penginapan[k]){if(tier==='all'){DB.penginapan[k].tinggi=0;DB.penginapan[k].sedang=0;DB.penginapan[k].rendah=0;}else if(DB.penginapan[k][tier]!==undefined)DB.penginapan[k][tier]=0;}}else if(parts[0]==='transport')DB.transportLokal=0;});
   }
   saveData(DB);renderCurrentViewAfterBulk(type);toast(`${ids.length} data berhasil dihapus.`);
 }
-function renderCurrentViewAfterBulk(type){
-  if(type==='hadir'){openAttendanceView();return;}
-  if(VIEWS[currentView])VIEWS[currentView].render();
-}
+function renderCurrentViewAfterBulk(type){if(type==='hadir'){openAttendanceView();return;}if(VIEWS[currentView])VIEWS[currentView].render();}
 function bulkCalendarManager(){
   const rows=[...(DB.kalenderManual||[])].sort((a,b)=>String(a.tanggal).localeCompare(String(b.tanggal)));
   simpleView('Kelola & Hapus Agenda Kalender',rows.length?`${bulkToolbar('cal','agenda kalender')}<div class="table-wrap"><table><thead><tr><th class="select-cell">✓</th><th>Tanggal</th><th>Judul</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${rows.map(x=>`<tr><td class="select-cell"><input class="row-check bulk-check" data-bulk-type="cal" value="${esc(x.id)}" onchange="updateBulkCount('cal')"></td><td>${fmtDate(x.tanggal)}</td><td>${esc(x.judul)}</td><td>${esc(x.status||'-')}</td><td><button class="icon-btn" onclick="viewManualCalendar('${x.id}')">👁️</button><button class="icon-btn" onclick="openManualCalendarModal('${x.id}')">✏️</button><button class="icon-btn" onclick="deleteManualCalendar('${x.id}')">🗑️</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Belum ada agenda manual.</div>');
