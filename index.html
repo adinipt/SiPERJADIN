@@ -231,7 +231,17 @@ textarea{resize:vertical; min-height:64px;}
   .sidebar-backdrop{display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:35;}
   .sidebar-backdrop.open{display:block;}
 }
-.cal-actions{display:inline-flex;gap:2px;margin-left:3px;vertical-align:middle}.cal-actions button{border:0;background:transparent;padding:0;cursor:pointer;font-size:11px;line-height:1}.cal-event{display:flex;align-items:center;justify-content:space-between;gap:3px}.cal-event>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}</style>
+.cal-actions{display:inline-flex;gap:2px;margin-left:3px;vertical-align:middle}.cal-actions button{border:0;background:transparent;padding:0;cursor:pointer;font-size:11px;line-height:1}.cal-event{display:flex;align-items:center;justify-content:space-between;gap:3px}.cal-event>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Import daftar hadir */
+.import-progress{position:fixed;inset:0;background:rgba(10,25,40,.42);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;}
+.import-progress-card{width:min(460px,100%);background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;box-shadow:0 12px 40px rgba(0,0,0,.2);text-align:center;}
+.import-spinner{width:42px;height:42px;border:4px solid var(--border);border-top-color:var(--brand);border-radius:50%;animation:importSpin .8s linear infinite;margin:0 auto 14px;}
+@keyframes importSpin{to{transform:rotate(360deg)}}
+.import-progress-title{font-weight:700;font-size:15px;margin-bottom:6px;}
+.import-progress-text{font-size:12.5px;color:var(--text-soft);line-height:1.5;}
+.import-progress-bar{height:8px;background:var(--border);border-radius:99px;overflow:hidden;margin-top:14px;}
+.import-progress-fill{height:100%;width:0;background:var(--brand);transition:width .15s ease;}
+</style>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
 </head>
 <body>
@@ -348,6 +358,8 @@ function saveData(d){
 
 // Data aplikasi dimuat setelah seluruh fungsi data-layer tersedia.
 let DB = loadData();
+cleanMasterPegawai();
+saveData(DB);
 
 /* =========================================================
    Router / render
@@ -1321,7 +1333,8 @@ function exportPegawaiExcel(){
   XLSX.writeFile(wb,'Data_Pegawai_SiPERJADIN.xlsx');
 }
 function normalizeImportText(v){
-  return String(v??'').replace(/\u00a0/g,' ').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  if(v===null||v===undefined)return '';
+  return String(v).replace(/\u00a0/g,' ').replace(/[\r\n]+/g,' ').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
 }
 function normHead(v){
   return normalizeImportText(v).toLowerCase()
@@ -1332,55 +1345,64 @@ function normHead(v){
 function parseDelimited(text){
   const lines=String(text||'').replace(/^\uFEFF/,'').split(/\r?\n/).filter(line=>line.trim()!=='');
   if(!lines.length)return [];
-  const delimiter=(lines[0].includes('\t')?'\t':(lines[0].includes(';')?';':','));
+  const first=lines[0];
+  const delimiter=(first.includes('\t')?'\t':(first.includes(';')?';':','));
   return lines.map(line=>{
-    const out=[]; let cur='', quoted=false;
+    const out=[];let cur='',quoted=false;
     for(let i=0;i<line.length;i++){
       const ch=line[i];
       if(ch==='"'){
-        if(quoted && line[i+1]==='"'){cur+='"';i++;}
+        if(quoted&&line[i+1]==='"'){cur+='"';i++;}
         else quoted=!quoted;
-      }else if(ch===delimiter && !quoted){out.push(cur.trim());cur='';}
+      }else if(ch===delimiter&&!quoted){out.push(cur.trim());cur='';}
       else cur+=ch;
     }
-    out.push(cur.trim()); return out;
+    out.push(cur.trim());return out;
   });
 }
+
+const IMPORT_ALIASES={
+  nama:['nama','nama_pegawai','nama_lengkap','nama_asn','nama_pegawai_asn','pegawai','nama_pns','nama_pppk','name'],
+  nip:['nip','nip_pns','nipppk','nip_pppk','nomor_induk_pegawai','nomor_induk','no_nip','no_induk','nip_pegawai'],
+  gol:['golongan','golongan_ruang','gol_ruang','gol_ruang_pangkat','pangkat_golongan','pangkat','gol'],
+  jab:['jabatan','jabatan_pegawai','uraian_jabatan','jabatan_struktural','jabatan_fungsional','position'],
+  unit:['unit','unit_kerja','unit_organisasi','opd','instansi','organisasi','bagian','subbagian','perangkat_daerah'],
+  kat:['kategori','kategori_tarif','kategori_sbm','gol_tarif','kelas_jabatan'],
+  tanggal:['tanggal','tgl','tanggal_hadir','tanggal_kehadiran','hari_tanggal','tanggal_absen','date'],
+  status:['status','status_kehadiran','kehadiran','presensi','absen','keterangan','status_absen'],
+  masuk:['jam_masuk','waktu_masuk','check_in','jam_datang','waktu_datang','masuk'],
+  pulang:['jam_pulang','waktu_pulang','check_out','jam_pulang_kerja','waktu_pulang','pulang']
+};
 function importHeaderScore(row){
-  const hs=row.map(normHead);
-  const tests={
-    nama:['nama','nama_pegawai','nama_lengkap','nama_asn','pegawai','name'],
-    nip:['nip','nip_pns','nipppk','nip_pppk','nomor_induk_pegawai','nomor_induk','no_nip'],
-    gol:['golongan','golongan_ruang','gol_ruang','pangkat_golongan','pangkat'],
-    jab:['jabatan','jabatan_pegawai','uraian_jabatan','position'],
-    unit:['unit','unit_kerja','opd','instansi','organisasi','bagian'],
-    kat:['kategori','kategori_tarif','kategori_sbm'],
-    tanggal:['tanggal','tgl','tanggal_hadir','tanggal_kehadiran','hari_tanggal','date'],
-    status:['status','status_kehadiran','kehadiran','presensi','absen','keterangan'],
-    masuk:['jam_masuk','waktu_masuk','check_in','jam_datang','masuk'],
-    pulang:['jam_pulang','waktu_pulang','check_out','jam_pulang_kerja','pulang']
-  };
-  let score=0;
-  hs.forEach(h=>Object.values(tests).forEach(arr=>arr.forEach(a=>{if(h===a||h.includes(a))score++;})));
+  const hs=(row||[]).map(normHead);let score=0;
+  Object.values(IMPORT_ALIASES).forEach(arr=>arr.forEach(a=>hs.forEach(h=>{
+    if(h===a)score+=4;
+    else if(h.includes(a)||a.includes(h)&&h.length>=4)score+=1;
+  })));
   return score;
 }
 function detectImportHeader(rows){
-  let bestIndex=0,bestScore=0;
-  const limit=Math.min(rows.length,30);
+  let bestIndex=-1,bestScore=0;
+  const limit=Math.min(rows.length,60);
   for(let i=0;i<limit;i++){
     const score=importHeaderScore(rows[i]||[]);
     if(score>bestScore){bestScore=score;bestIndex=i;}
   }
   return {index:bestIndex,score:bestScore};
 }
-function findCol(headers, aliases){
+function buildImportHeader(rows,idx){
+  const a=Array.isArray(rows[idx])?rows[idx]:[];
+  const b=Array.isArray(rows[idx+1])?rows[idx+1]:[];
+  const max=Math.max(a.length,b.length);
+  return Array.from({length:max},(_,i)=>{
+    const x=normalizeImportText(a[i]),y=normalizeImportText(b[i]);
+    return x&&y&&normHead(x)!==normHead(y)?`${x} ${y}`:(x||y);
+  });
+}
+function findCol(headers,aliases){
   const hs=headers.map(normHead);
-  for(const a of aliases){
-    const exact=hs.findIndex(h=>h===a); if(exact>=0)return exact;
-  }
-  for(const a of aliases){
-    const idx=hs.findIndex(h=>h.includes(a)); if(idx>=0)return idx;
-  }
+  for(const a of aliases){const i=hs.findIndex(h=>h===a);if(i>=0)return i;}
+  for(const a of aliases){const i=hs.findIndex(h=>h.includes(a)&&a.length>=4);if(i>=0)return i;}
   return -1;
 }
 function normalizeNip(v){
@@ -1388,110 +1410,214 @@ function normalizeNip(v){
   if(!s)return '';
   s=s.replace(/[ .\-\/]/g,'');
   if(/^\d{15,20}$/.test(s))return s;
-  return s;
+  const m=s.match(/(\d{15,20})/);return m?m[1]:'';
 }
 function extractNipFromText(v){
   const s=normalizeImportText(v);
-  const m=s.match(/\b\d{15,20}\b/);
-  return m?m[0]:'';
+  const m=s.match(/(?:^|\D)(\d{15,20})(?:\D|$)/);
+  return m?m[1]:'';
 }
 function cleanName(v){
   let s=normalizeImportText(v);
-  s=s.replace(/^\s*(nama\s*[:.\-])\s*/i,'').trim();
-  s=s.replace(/\s*\/\s*\d{15,20}\s*$/,'').trim();
+  s=s.replace(/^\s*(?:no\.?|nomor)\s*[.)\-:]?\s*/i,'');
+  s=s.replace(/\s*[\|\/]\s*\d{15,20}\s*$/,'');
+  s=s.replace(/^\d+[.)\-:]\s*/,'').trim();
   return s;
 }
+function isBadName(v){
+  const s=normHead(v);
+  if(!s)return true;
+  const bad=/^(no|nomor|nama|nama_pegawai|pegawai|nip|nip_pns|nomor_induk_pegawai|golongan|gol|pangkat|jabatan|unit|unit_kerja|opd|instansi|tanggal|tgl|status|kehadiran|presensi|absen|keterangan|jam_masuk|jam_pulang|masuk|pulang)$/i;
+  if(bad.test(s))return true;
+  if(/^(hadir|izin|sakit|alpa|alpha|cuti|dinas|masuk|pulang)$/i.test(s))return true;
+  if(/^\d+$/.test(s))return true;
+  if(/^(senin|selasa|rabu|kamis|jumat|jum'at|sabtu|minggu)$/.test(s))return true;
+  return !/[A-Za-z]/.test(String(v));
+}
 function getImportCell(row,idx){return idx>=0?normalizeImportText(row[idx]):'';}
-function importAttendanceRows(rows){
-  if(!Array.isArray(rows)||!rows.length)return{added:0,updated:0,attendance:0,rows:0,headerRow:0};
-  rows=rows.map(r=>Array.isArray(r)?r:[]);
-  const hd=detectImportHeader(rows), header=rows[hd.index]||[];
-  const ix={
-    nama:findCol(header,['nama_pegawai','nama_lengkap','nama_asn','nama','pegawai','name']),
-    nip:findCol(header,['nip_pppk','nipppk','nip_pns','nomor_induk_pegawai','nomor_induk','no_nip','nip']),
-    gol:findCol(header,['golongan_ruang','pangkat_golongan','gol_ruang','golongan','pangkat']),
-    jab:findCol(header,['jabatan_pegawai','uraian_jabatan','jabatan','position']),
-    unit:findCol(header,['unit_kerja','unit','opd','instansi','organisasi','bagian']),
-    kat:findCol(header,['kategori_tarif','kategori_sbm','kategori']),
-    tanggal:findCol(header,['tanggal_kehadiran','tanggal_hadir','hari_tanggal','tanggal','tgl','date']),
-    status:findCol(header,['status_kehadiran','kehadiran','presensi','absen','status','keterangan']),
-    masuk:findCol(header,['jam_masuk','waktu_masuk','check_in','jam_datang','masuk']),
-    pulang:findCol(header,['jam_pulang','waktu_pulang','check_out','pulang'])
-  };
-  // Bila file tidak memiliki baris judul yang mudah dikenali, tetap coba baris pertama.
-  if(hd.score===0){
-    const fallback=rows[0]||[];
-    Object.keys(ix).forEach(k=>{if(ix[k]<0)ix[k]=findCol(fallback,[k]);});
-  }
-  let added=0,updated=0,attendance=0,processed=0;
-  rows.slice(hd.index+1).forEach(row=>{
-    if(!row || !row.some(v=>normalizeImportText(v)!==''))return;
-    let nama=cleanName(getImportCell(row,ix.nama));
-    let nip=normalizeNip(getImportCell(row,ix.nip));
-    // Dukungan untuk format daftar hadir yang menaruh NIP di kolom yang sama dengan nama.
-    if(!nip){
-      const combined=row.map(normalizeImportText).join(' ');
-      nip=extractNipFromText(combined);
-      if(!nama){
-        const nameCell=row.find(v=>/[A-Za-zÀ-ÿ]/.test(normalizeImportText(v)) && !/^(hadir|izin|sakit|alpa|cuti|pulang|masuk)$/i.test(normalizeImportText(v)));
-        nama=cleanName(nameCell||'');
-      }
-    }
-    // Jika kolom nama terdeteksi tetapi berisi NIP saja, cari nama dari sel teks lain.
-    if(!nama || /^\d+$/.test(nama)){
-      const candidate=row.find(v=>{const x=normalizeImportText(v);return /[A-Za-zÀ-ÿ]/.test(x)&&!/^\d+$/.test(x)&&!/^(hadir|izin|sakit|alpa|cuti)$/i.test(x);});
-      if(candidate)nama=cleanName(candidate);
-    }
-    if(!nama && !nip)return;
-    let p=(nip&&DB.pegawai.find(x=>normalizeNip(x.nip)===nip))||(nama&&DB.pegawai.find(x=>normalizeImportText(x.nama).toLowerCase()===nama.toLowerCase()));
-    const d={
-      nama:nama||p?.nama||'',
-      nip:nip||p?.nip||'',
-      golongan:getImportCell(row,ix.gol)||p?.golongan||'',
-      jabatan:getImportCell(row,ix.jab)||p?.jabatan||'',
-      kategori:getImportCell(row,ix.kat)||p?.kategori||'Fungsional/Staf',
-      unit:getImportCell(row,ix.unit)||p?.unit||''
-    };
-    if(p){Object.assign(p,d);updated++;}else{p=Object.assign({id:uid('p')},d);DB.pegawai.push(p);added++;}
-    const tanggal=getImportCell(row,ix.tanggal), status=getImportCell(row,ix.status), masuk=getImportCell(row,ix.masuk), pulang=getImportCell(row,ix.pulang);
-    if(tanggal||status||masuk||pulang){
-      DB.kehadiran.push({id:uid('hadir'),pegawaiId:p.id,nama:p.nama,nip:p.nip,tanggal:tanggal||todayISO(),status:status||'Hadir',jamMasuk:masuk,jamPulang:pulang,sumber:'Impor file'});
-      attendance++;
-    }
-    processed++;
+function normalizeImportedDate(v){
+  if(v instanceof Date&&!isNaN(v))return v.toISOString().slice(0,10);
+  const s=normalizeImportText(v);if(!s)return '';
+  let m=s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+  if(m)return `${m[3]}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;
+  m=s.match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
+  if(m)return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+  const d=new Date(s);return isNaN(d)?'':d.toISOString().slice(0,10);
+}
+function normalizeAttendanceStatus(v){
+  const s=normalizeImportText(v);if(!s)return '';
+  const n=s.toLowerCase();
+  if(/hadir|masuk|present/.test(n))return 'Hadir';
+  if(/izin/.test(n))return 'Izin';
+  if(/sakit/.test(n))return 'Sakit';
+  if(/alpa|alpha|tanpa_keterangan/.test(n))return 'Alpa';
+  if(/cuti/.test(n))return 'Cuti';
+  return s;
+}
+function cleanMasterPegawai(){
+  const seenNip=new Set(),seenName=new Set(),out=[];
+  (DB.pegawai||[]).forEach(p=>{
+    const nama=cleanName(p.nama||'');const nip=normalizeNip(p.nip||'');
+    if(isBadName(nama)&&!nip)return;
+    const nk=normalizeImportText(nama).toLowerCase();
+    if(nip&&seenNip.has(nip))return;
+    if(!nip&&nk&&seenName.has(nk))return;
+    const q=Object.assign({},p,{nama,nip,golongan:normalizeImportText(p.golongan||''),jabatan:normalizeImportText(p.jabatan||''),kategori:normalizeImportText(p.kategori||'Fungsional/Staf')||'Fungsional/Staf',unit:normalizeImportText(p.unit||'')});
+    if(nip)seenNip.add(nip);if(nk)seenName.add(nk);out.push(q);
   });
+  DB.pegawai=out;
+  // Unit kerja yang benar-benar berasal dari kolom Unit/OPD pada file ikut dibuat di master Unit Kerja.
+  const units=new Set(DB.pegawai.map(p=>normalizeImportText(p.unit||'')).filter(Boolean).filter(u=>!isBadName(u)));
+  units.forEach(nama=>{
+    if(!DB.unitKerja.some(u=>normalizeImportText(u.nama).toLowerCase()===nama.toLowerCase())){
+      DB.unitKerja.push({id:uid('u'),nama,pagu:0});
+    }
+  });
+  const validIds=new Set(DB.pegawai.map(p=>p.id));
+  DB.kehadiran=(DB.kehadiran||[]).filter(a=>{
+    if(a.pegawaiId&&validIds.has(a.pegawaiId))return true;
+    const nama=normalizeImportText(a.nama||'').toLowerCase();
+    return nama&&DB.pegawai.some(p=>normalizeImportText(p.nama).toLowerCase()===nama);
+  }).map(a=>{
+    const p=a.pegawaiId?DB.pegawai.find(x=>x.id===a.pegawaiId):DB.pegawai.find(x=>normalizeImportText(x.nama).toLowerCase()===normalizeImportText(a.nama||'').toLowerCase());
+    return Object.assign(a,p?{pegawaiId:p.id,nama:p.nama,nip:p.nip}:{});
+  });
+}
+function showImportLoading(title='Mengolah data daftar hadir…',text='Membaca file dan menempatkan data ke bagian yang sesuai.',percent=0){
+  let el=document.getElementById('importProgress');
+  if(!el){el=document.createElement('div');el.id='importProgress';el.className='import-progress';document.body.appendChild(el);}
+  el.innerHTML=`<div class="import-progress-card"><div class="import-spinner"></div><div class="import-progress-title">${esc(title)}</div><div class="import-progress-text">${esc(text)}</div><div class="import-progress-bar"><div class="import-progress-fill" style="width:${Math.max(0,Math.min(100,percent))}%"></div></div></div>`;
+}
+function hideImportLoading(){document.getElementById('importProgress')?.remove();}
+function nextImportFrame(){return new Promise(resolve=>setTimeout(resolve,0));}
+
+async function importAttendanceRows(rows){
+  if(!Array.isArray(rows)||!rows.length)return{added:0,updated:0,attendanceNew:0,attendanceUpdated:0,rows:0,headerRow:0};
+  const hd=detectImportHeader(rows);
+  if(hd.index<0||hd.score<4)return{added:0,updated:0,attendanceNew:0,attendanceUpdated:0,rows:0,headerRow:0,invalid:true};
+  const header=buildImportHeader(rows,hd.index);
+  const ix={};Object.keys(IMPORT_ALIASES).forEach(k=>ix[k]=findCol(header,IMPORT_ALIASES[k]));
+  const hasEmployeeColumns=ix.nama>=0||ix.nip>=0;
+  if(!hasEmployeeColumns)return{added:0,updated:0,attendanceNew:0,attendanceUpdated:0,rows:0,headerRow:hd.index+1,invalid:true};
+
+  let added=0,updated=0,attendanceNew=0,attendanceUpdated=0,processed=0,skipped=0;
+  const dataRows=rows.slice(hd.index+1);
+  for(let start=0;start<dataRows.length;start+=80){
+    const end=Math.min(start+80,dataRows.length);
+    for(let ri=start;ri<end;ri++){
+      const row=dataRows[ri]||[];
+      if(!row.some(v=>normalizeImportText(v)!==''))continue;
+      const joined=row.map(normalizeImportText).join(' ');
+      if(importHeaderScore(row)>=4&&/nama|nip|jabatan|tanggal/i.test(joined)){skipped++;continue;}
+
+      let nip=ix.nip>=0?normalizeNip(getImportCell(row,ix.nip)):'';
+      let nama=ix.nama>=0?cleanName(getImportCell(row,ix.nama)):'';
+      if(!nip)nip=extractNipFromText(joined);
+      if(!nama||isBadName(nama)){
+        // Hanya cari nama dari kolom teks yang masuk akal; jangan mengambil tanggal/status/keterangan sebagai nama.
+        const candidates=[];
+        row.forEach((v,i)=>{
+          const x=cleanName(v);if(i===ix.nip||i===ix.tanggal||i===ix.status||i===ix.masuk||i===ix.pulang)return;
+          if(x&&!isBadName(x)&&!/^\d/.test(x)&&/[A-Za-z]{2,}/.test(x))candidates.push(x);
+        });
+        nama=candidates.length?candidates[0]:'';
+      }
+      if(!nama&&!nip){skipped++;continue;}
+      if(isBadName(nama)&&!nip){skipped++;continue;}
+
+      let p=(nip&&DB.pegawai.find(x=>normalizeNip(x.nip)===nip))||(nama&&DB.pegawai.find(x=>normalizeImportText(x.nama).toLowerCase()===normalizeImportText(nama).toLowerCase()));
+      const old=p?Object.assign({},p):null;
+      const d={
+        nama:nama||p?.nama||'',
+        nip:nip||p?.nip||'',
+        golongan:ix.gol>=0?getImportCell(row,ix.gol):'',
+        jabatan:ix.jab>=0?getImportCell(row,ix.jab):'',
+        kategori:ix.kat>=0?getImportCell(row,ix.kat):'',
+        unit:ix.unit>=0?getImportCell(row,ix.unit):''
+      };
+      // Kolom yang tidak tersedia di file tidak boleh diisi dengan data acak.
+      if(p){
+        if(d.nama&&!isBadName(d.nama))p.nama=d.nama;
+        if(d.nip)p.nip=d.nip;
+        if(d.golongan)p.golongan=d.golongan;
+        if(d.jabatan)p.jabatan=d.jabatan;
+        if(d.kategori)p.kategori=d.kategori;
+        if(d.unit)p.unit=d.unit;
+        updated++;
+      }else{
+        p=Object.assign({id:uid('p')},{nama:d.nama||'',nip:d.nip||'',golongan:d.golongan||'',jabatan:d.jabatan||'',kategori:d.kategori||'Fungsional/Staf',unit:d.unit||''});
+        DB.pegawai.push(p);added++;
+      }
+      // Jika file menyediakan Unit Kerja/OPD, buat master unit yang belum ada agar pegawai langsung memiliki tempat yang konsisten.
+      if(d.unit&&!isBadName(d.unit)&&!DB.unitKerja.some(u=>normalizeImportText(u.nama).toLowerCase()===d.unit.toLowerCase())){
+        DB.unitKerja.push({id:uid('u'),nama:d.unit,pagu:0});
+      }
+
+      const tanggal=ix.tanggal>=0?normalizeImportedDate(getImportCell(row,ix.tanggal)):'';
+      const status=ix.status>=0?normalizeAttendanceStatus(getImportCell(row,ix.status)):'';
+      const masuk=ix.masuk>=0?getImportCell(row,ix.masuk):'';
+      const pulang=ix.pulang>=0?getImportCell(row,ix.pulang):'';
+      if(tanggal||status||masuk||pulang){
+        const keyDate=tanggal||todayISO();
+        let a=DB.kehadiran.find(x=>x.pegawaiId===p.id&&x.tanggal===keyDate);
+        if(a){
+          a.nama=p.nama;a.nip=p.nip;
+          if(tanggal)a.tanggal=tanggal;
+          if(status)a.status=status;
+          if(masuk)a.jamMasuk=masuk;
+          if(pulang)a.jamPulang=pulang;
+          a.sumber='Impor daftar hadir';attendanceUpdated++;
+        }else{
+          DB.kehadiran.push({id:uid('hadir'),pegawaiId:p.id,nama:p.nama,nip:p.nip,tanggal:keyDate,status:status||'Hadir',jamMasuk:masuk,jamPulang:pulang,sumber:'Impor daftar hadir'});
+          attendanceNew++;
+        }
+      }
+      processed++;
+    }
+    const percent=Math.round((end/dataRows.length)*100);
+    showImportLoading('Mengolah data daftar hadir…',`Memproses baris ${end} dari ${dataRows.length}. Data pegawai dan kehadiran sedang ditempatkan.`,percent);
+    await nextImportFrame();
+  }
+  cleanMasterPegawai();
   saveData(DB);
-  return{added,updated,attendance,rows:processed,headerRow:hd.index+1,headerScore:hd.score};
+  return{added,updated,attendanceNew,attendanceUpdated,rows:processed,skipped,headerRow:hd.index+1,headerScore:hd.score};
 }
 async function importPegawaiFile(file){
   if(!file)return;
+  showImportLoading('Membaca file…','Menyiapkan data untuk diproses.',5);
   try{
-    const name=(file.name||'').toLowerCase();
-    let rows=[];
+    const name=(file.name||'').toLowerCase();let rows=[];
     if(name.endsWith('.json')){
       const j=JSON.parse(await file.text());
-      if(Array.isArray(j)&&j.length){
-        const keys=[...new Set(j.flatMap(x=>Object.keys(x||{})))];
-        rows=[keys,...j.map(x=>keys.map(k=>x?.[k]??''))];
-      }
+      if(Array.isArray(j)&&j.length){const keys=[...new Set(j.flatMap(x=>Object.keys(x||{})))];rows=[keys,...j.map(x=>keys.map(k=>x?.[k]??''))];}
     }else{
       const buf=await file.arrayBuffer();
       const isText=/\.(csv|tsv|txt)$/i.test(name);
       if(!isText){
-        if(!window.XLSX)throw new Error('Library Excel belum termuat.');
-        const wb=XLSX.read(buf,{type:'array',cellDates:true});
+        if(!window.XLSX)throw new Error('Library Excel belum termuat. Silakan tunggu halaman selesai dimuat lalu coba lagi.');
+        const wb=XLSX.read(buf,{type:'array',cellDates:true,raw:false});
         if(!wb.SheetNames.length)throw new Error('Workbook tidak memiliki sheet.');
-        const ws=wb.Sheets[wb.SheetNames[0]];
+        // Cari sheet pertama yang benar-benar berisi tabel, bukan sheet kosong.
+        let ws=null;
+        for(const sn of wb.SheetNames){const candidate=wb.Sheets[sn];const test=XLSX.utils.sheet_to_json(candidate,{header:1,defval:'',raw:false,blankrows:false});if(test.length){ws=candidate;break;}}
+        if(!ws)throw new Error('Tidak ditemukan tabel pada file Excel.');
         rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false,blankrows:false});
-      }else{
-        rows=parseDelimited(new TextDecoder('utf-8').decode(buf));
-      }
+      }else rows=parseDelimited(new TextDecoder('utf-8').decode(buf));
     }
-    const r=importAttendanceRows(rows);
-    renderMasterBody();
-    if(!r.rows){toast(`File terbaca, tetapi tidak ada baris data pegawai yang dikenali. Header ditemukan pada baris ${r.headerRow||1}. Periksa kolom Nama/NIP.`);return;}
-    toast(`Impor: ${r.added} baru, ${r.updated} diperbarui, ${r.attendance} catatan hadir`);
-  }catch(e){console.error('Impor pegawai/daftar hadir:',e);toast(`Impor gagal: ${e.message||'format file tidak dikenali'}`);}
+    showImportLoading('Menganalisis struktur data…','Mencari header Nama/NIP dan kolom daftar hadir.',15);
+    await nextImportFrame();
+    const r=await importAttendanceRows(rows);
+    if(r.invalid){
+      hideImportLoading();
+      toast('Data terbaca, tetapi struktur kolom pegawai tidak dikenali. Pastikan ada kolom Nama atau NIP. Tidak ada data yang dimasukkan.');
+      return;
+    }
+    cleanMasterPegawai();saveData(DB);renderMasterBody();
+    hideImportLoading();
+    toast(`Impor: ${r.added} baru, ${r.updated} diperbarui, ${r.attendanceNew+r.attendanceUpdated} catatan hadir`);
+  }catch(e){
+    console.error('Impor pegawai/daftar hadir:',e);hideImportLoading();toast(`Impor gagal: ${e.message||'format file tidak dikenali'}`);
+  }
 }
 function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
 function simpleView(title,body){document.getElementById('modalBox').className='modal wide';document.getElementById('modalBox').innerHTML=`<div class="modal-head"><h3>${esc(title)}</h3><button class="close-x" onclick="closeModal()">✕</button></div>${body}<div style="text-align:right;margin-top:16px"><button class="btn btn-outline" onclick="closeModal()">Tutup</button></div>`;document.getElementById('modalBg').classList.add('open');}
