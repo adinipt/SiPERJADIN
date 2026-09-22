@@ -1301,7 +1301,7 @@ function renderMasterBody(){
       <div class="table-wrap"><table>
         <thead><tr><th class="select-cell">✓</th><th>Nama</th><th>NIP</th><th>Golongan</th><th>Jabatan</th><th>Kategori Tarif</th><th>Unit Kerja</th><th></th></tr></thead>
         <tbody>${DB.pegawai.length?DB.pegawai.map(p=>`<tr>
-          <td class="select-cell"><input type="checkbox" class="row-check bulk-check" data-bulk-type="pegawai" value="${esc(p.id)}" onchange="updateBulkCount('pegawai')"></td><td>${esc(p.nama)}</td><td>${p.nip}</td><td>${p.golongan}</td><td>${p.jabatan}</td><td>${p.kategori}</td><td>${p.unit}</td>
+          <td class="select-cell"><input type="checkbox" class="row-check bulk-check" data-bulk-type="pegawai" value="${esc(p.id)}" onchange="updateBulkCount('pegawai')"></td><td>${esc(p.nama)}</td><td>${esc(p.nip)}</td><td>${esc(p.golongan)}</td><td>${esc(p.jabatan)}</td><td>${esc(p.kategori)}</td><td>${esc(p.unit)}</td>
           <td><div class="actions-row"><button class="icon-btn" title="Lihat" onclick="viewPegawai('${p.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="openPegawaiModal('${p.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deletePegawai('${p.id}')">🗑️</button></div></td>
         </tr>`).join(''):`<tr><td colspan="8"><div class="empty">Belum ada data pegawai. Impor Excel/CSV atau tambah pegawai.</div></td></tr>`}</tbody>
       </table></div>`;
@@ -1369,18 +1369,15 @@ function openPegawaiModal(id){
   document.getElementById('modalBox').innerHTML = `
     <div class="modal-head"><h3>${editing?'Ubah':'Tambah'} Data Pegawai</h3><button class="close-x" onclick="closeModal()">✕</button></div>
     <div class="form-grid">
-      <div class="full"><label>Nama Lengkap &amp; Gelar</label><input type="text" id="pg_nama" value="${p.nama}"></div>
-      <div><label>NIP</label><input type="text" id="pg_nip" value="${p.nip}"></div>
-      <div><label>Golongan / Ruang</label><input type="text" id="pg_gol" value="${p.golongan}"></div>
-      <div><label>Jabatan</label><input type="text" id="pg_jab" value="${p.jabatan}"></div>
+      <div class="full"><label>Nama Lengkap &amp; Gelar</label><input type="text" id="pg_nama" value="${esc(p.nama)}"></div>
+      <div><label>NIP</label><input type="text" id="pg_nip" value="${esc(p.nip)}"></div>
+      <div><label>Golongan / Ruang</label><input type="text" id="pg_gol" value="${esc(p.golongan)}"></div>
+      <div><label>Jabatan</label><input type="text" id="pg_jab" value="${esc(p.jabatan)}"></div>
       <div><label>Kategori Tarif SBM</label>
-        <select id="pg_kat">${Object.keys(DB.penginapan).map(k=>`<option ${k===p.kategori?'selected':''}>${k}</option>`).join('')}</select>
+        <select id="pg_kat">${Object.keys(DB.penginapan).map(k=>`<option ${k===p.kategori?'selected':''}>${esc(k)}</option>`).join('')}</select>
       </div>
       <div class="full"><label>Unit Kerja</label>
-        <select id="pg_unit">${DB.unitKerja.map(u=>`<option ${u.nama===p.unit?'selected':''}>${u.nama}</option>`).join('')}</select>
-      </div>
-      <div class="full"><label>Mode Pengisian</label>
-        <select id="pg_mode"><option>Otomatis dari file/master</option><option>Manual</option></select>
+        <select id="pg_unit">${DB.unitKerja.map(u=>`<option ${u.nama===p.unit?'selected':''}>${esc(u.nama)}</option>`).join('')}</select>
       </div>
     </div>
     <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
@@ -1391,11 +1388,18 @@ function openPegawaiModal(id){
   document.getElementById('modalBg').classList.add('open');
 }
 function savePegawai(id){
-  const data = { nama: pg('pg_nama'), nip: pg('pg_nip'), golongan: pg('pg_gol'), jabatan: pg('pg_jab'), kategori: pg('pg_kat'), unit: pg('pg_unit') };
+  const data = {
+    nama: cleanName(pg('pg_nama')),
+    nip: normalizeImportText(pg('pg_nip')),
+    golongan: normalizeGolongan(pg('pg_gol')),
+    jabatan: normalizeJabatan(pg('pg_jab')),
+    kategori: pg('pg_kat'),
+    unit: normalizeUnit(pg('pg_unit'))
+  };
   if(!data.nama){ toast('Nama wajib diisi'); return; }
   if(id){ Object.assign(DB.pegawai.find(p=>p.id===id), data); }
   else { DB.pegawai.push(Object.assign({id: uid('p')}, data)); }
-  saveData(DB); closeModal(); renderMasterBody(); toast('Data pegawai disimpan');
+  cleanMasterPegawai(); saveData(DB); closeModal(); renderMasterBody(); toast('Data pegawai disimpan');
 }
 function pg(id){ return document.getElementById(id).value; }
 
@@ -1572,12 +1576,18 @@ function viewLpj(id){const l=DB.lpj.find(x=>x.id===id);if(!l)return;const s=DB.s
 function editLpj(id){const l=DB.lpj.find(x=>x.id===id);if(!l)return;document.getElementById('modalBox').className='modal';document.getElementById('modalBox').innerHTML=`<div class="modal-head"><h3>Edit LPJ</h3><button class="close-x" onclick="closeModal()">✕</button></div><label>Tanggal</label><input type="date" id="le_t" value="${l.tanggalLapor}"><div style="height:8px"></div><label>Ringkasan</label><textarea id="le_r">${esc(l.ringkasan||'')}</textarea><div style="height:8px"></div><label>Biaya Riil</label><input type="number" id="le_b" value="${l.biayaRiil||0}"><div style="text-align:right;margin-top:14px"><button class="btn btn-primary" onclick="saveLpjEdit('${id}')">Simpan</button></div>`;document.getElementById('modalBg').classList.add('open');}
 function saveLpjEdit(id){const l=DB.lpj.find(x=>x.id===id);l.tanggalLapor=document.getElementById('le_t').value;l.ringkasan=document.getElementById('le_r').value;l.biayaRiil=Number(document.getElementById('le_b').value)||0;saveData(DB);closeModal();renderLpj();}
 function deleteLpj(id){if(!confirm('Hapus LPJ ini?'))return;DB.lpj=DB.lpj.filter(x=>x.id!==id);saveData(DB);renderLpj();toast('LPJ dihapus');}
-function normHead(v){return String(v??'').trim().toLowerCase().replace(/[\s\-\/]+/g,'_').replace(/[()]/g,'');}
 function openAttendanceView(){const a=DB.kehadiran||[];simpleView('Riwayat Daftar Hadir',a.length?`${bulkToolbar('hadir','catatan hadir')}<div class="table-wrap"><table><thead><tr><th class="select-cell">✓</th><th>Tanggal</th><th>Nama</th><th>NIP</th><th>Status</th><th>Masuk</th><th>Pulang</th><th>Aksi</th></tr></thead><tbody>${a.slice().reverse().map(x=>`<tr><td class="select-cell"><input type="checkbox" class="row-check bulk-check" data-bulk-type="hadir" value="${esc(x.id)}" onchange="updateBulkCount('hadir')"></td><td>${fmtDate(x.tanggal)}</td><td>${esc(x.nama)}</td><td>${esc(x.nip)}</td><td>${esc(x.status)}</td><td>${esc(x.jamMasuk||'-')}</td><td>${esc(x.jamPulang||'-')}</td><td><button class="icon-btn" title="Lihat" onclick="viewAttendance('${x.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="editAttendance('${x.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deleteAttendance('${x.id}')">🗑️</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Belum ada daftar hadir.</div>');}
 function viewAttendance(id){const x=DB.kehadiran.find(v=>v.id===id);if(x)simpleView('Lihat Kehadiran',`<b>Nama:</b> ${esc(x.nama)}<br><b>NIP:</b> ${esc(x.nip)}<br><b>Tanggal:</b> ${fmtDate(x.tanggal)}<br><b>Status:</b> ${esc(x.status)}<br><b>Masuk:</b> ${esc(x.jamMasuk||'-')}<br><b>Pulang:</b> ${esc(x.jamPulang||'-')}`);}
 function editAttendance(id){const x=DB.kehadiran.find(v=>v.id===id);if(!x)return;document.getElementById('modalBox').className='modal';document.getElementById('modalBox').innerHTML=`<div class="modal-head"><h3>Edit Kehadiran</h3><button class="close-x" onclick="closeModal()">✕</button></div><label>Tanggal</label><input type="date" id="ae_t" value="${x.tanggal}"><div style="height:8px"></div><label>Status</label><input id="ae_s" value="${esc(x.status)}"><div style="height:8px"></div><label>Jam Masuk</label><input id="ae_i" value="${esc(x.jamMasuk||'')}"><div style="height:8px"></div><label>Jam Pulang</label><input id="ae_o" value="${esc(x.jamPulang||'')}"><div style="text-align:right;margin-top:14px"><button class="btn btn-primary" onclick="saveAttendance('${id}')">Simpan</button></div>`;document.getElementById('modalBg').classList.add('open');}
 function saveAttendance(id){const x=DB.kehadiran.find(v=>v.id===id);x.tanggal=document.getElementById('ae_t').value;x.status=document.getElementById('ae_s').value;x.jamMasuk=document.getElementById('ae_i').value;x.jamPulang=document.getElementById('ae_o').value;saveData(DB);closeModal();openAttendanceView();}
 function deleteAttendance(id){if(!confirm('Hapus catatan kehadiran?'))return;DB.kehadiran=DB.kehadiran.filter(x=>x.id!==id);saveData(DB);openAttendanceView();toast('Kehadiran dihapus');}
+/* Catatan perbaikan: normHead() sebelumnya didefinisikan DUA KALI di file ini (di sini dan di dekat baris 1420).
+   Karena deklarasi fungsi kedua menimpa yang pertama di seluruh file (function hoisting), SEMUA pencocokan
+   header impor (findCol, headerRowMetrics, isBadName, dst.) diam-diam memakai versi normHead yang lemah di
+   bawah ini — versi ini tidak menghapus tanda baca seperti titik/tanda kurung dan tidak menormalkan huruf
+   beraksen, sehingga header seperti "No.", "NIP.", atau "Gol./Ruang" gagal dikenali dan data pegawai hasil
+   impor menjadi berantakan. Definisi duplikat sudah dihapus; satu-satunya normHead() yang dipakai sekarang
+   adalah versi lengkap di dekat fungsi normalizeImportText(). */
 /* =========================================================
    DASAR HUKUM
 ========================================================= */
