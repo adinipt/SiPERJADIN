@@ -1320,39 +1320,179 @@ function exportPegawaiExcel(){
   XLSX.utils.book_append_sheet(wb,ws,'Pegawai');
   XLSX.writeFile(wb,'Data_Pegawai_SiPERJADIN.xlsx');
 }
-async function importPegawaiFile(file){
-  if(!file) return;
-  try{
-    const name=file.name.toLowerCase();
-    if(name.endsWith('.json')){
-      const data=JSON.parse(await file.text());
-      const rows=Array.isArray(data)?data:[];
-      let n=0;
-      rows.forEach(x=>{
-        if(!x.nama) return;
-        const existing=DB.pegawai.find(p=>x.nip&&p.nip===x.nip);
-        const d={nama:x.nama,nip:x.nip||'',golongan:x.golongan||'III/a',jabatan:x.jabatan||'',kategori:x.kategori||'Fungsional/Staf',unit:x.unit||DB.unitKerja[0]?.nama||''};
-        if(existing) Object.assign(existing,d); else DB.pegawai.push(Object.assign({id:uid('p')},d));
-        n++;
-      });
-      saveData(DB); renderMasterBody(); toast(`${n} data pegawai diproses`);
-      return;
-    }
-    const buf=await file.arrayBuffer();
-    let rows;
-    if(window.XLSX && !name.endsWith('.csv') && !name.endsWith('.tsv') && !name.endsWith('.txt')){
-      const wb=XLSX.read(buf,{type:'array'});
-      rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
-    }else{
-      rows=parseDelimited(new TextDecoder().decode(buf));
-    }
-    const result=importPegawaiRows(rows);
-    renderMasterBody();
-    toast(`Impor selesai: ${result.added} baru, ${result.updated} diperbarui`);
-  }catch(e){ console.error(e); toast('File tidak dapat diproses. Periksa format kolom.'); }
+function normalizeImportText(v){
+  return String(v??'').replace(/\u00a0/g,' ').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
 }
-
-
+function normHead(v){
+  return normalizeImportText(v).toLowerCase()
+    .replace(/&/g,' dan ')
+    .replace(/[^a-z0-9]+/g,'_')
+    .replace(/^_+|_+$/g,'');
+}
+function parseDelimited(text){
+  const lines=String(text||'').replace(/^\uFEFF/,'').split(/\r?\n/).filter(line=>line.trim()!=='');
+  if(!lines.length)return [];
+  const delimiter=(lines[0].includes('\t')?'\t':(lines[0].includes(';')?';':','));
+  return lines.map(line=>{
+    const out=[]; let cur='', quoted=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch==='"'){
+        if(quoted && line[i+1]==='"'){cur+='"';i++;}
+        else quoted=!quoted;
+      }else if(ch===delimiter && !quoted){out.push(cur.trim());cur='';}
+      else cur+=ch;
+    }
+    out.push(cur.trim()); return out;
+  });
+}
+function importHeaderScore(row){
+  const hs=row.map(normHead);
+  const tests={
+    nama:['nama','nama_pegawai','nama_lengkap','nama_asn','pegawai','name'],
+    nip:['nip','nip_pns','nipppk','nip_pppk','nomor_induk_pegawai','nomor_induk','no_nip'],
+    gol:['golongan','golongan_ruang','gol_ruang','pangkat_golongan','pangkat'],
+    jab:['jabatan','jabatan_pegawai','uraian_jabatan','position'],
+    unit:['unit','unit_kerja','opd','instansi','organisasi','bagian'],
+    kat:['kategori','kategori_tarif','kategori_sbm'],
+    tanggal:['tanggal','tgl','tanggal_hadir','tanggal_kehadiran','hari_tanggal','date'],
+    status:['status','status_kehadiran','kehadiran','presensi','absen','keterangan'],
+    masuk:['jam_masuk','waktu_masuk','check_in','jam_datang','masuk'],
+    pulang:['jam_pulang','waktu_pulang','check_out','jam_pulang_kerja','pulang']
+  };
+  let score=0;
+  hs.forEach(h=>Object.values(tests).forEach(arr=>arr.forEach(a=>{if(h===a||h.includes(a))score++;})));
+  return score;
+}
+function detectImportHeader(rows){
+  let bestIndex=0,bestScore=0;
+  const limit=Math.min(rows.length,30);
+  for(let i=0;i<limit;i++){
+    const score=importHeaderScore(rows[i]||[]);
+    if(score>bestScore){bestScore=score;bestIndex=i;}
+  }
+  return {index:bestIndex,score:bestScore};
+}
+function findCol(headers, aliases){
+  const hs=headers.map(normHead);
+  for(const a of aliases){
+    const exact=hs.findIndex(h=>h===a); if(exact>=0)return exact;
+  }
+  for(const a of aliases){
+    const idx=hs.findIndex(h=>h.includes(a)); if(idx>=0)return idx;
+  }
+  return -1;
+}
+function normalizeNip(v){
+  let s=normalizeImportText(v).replace(/^['`]/,'').trim();
+  if(!s)return '';
+  s=s.replace(/[ .\-\/]/g,'');
+  if(/^\d{15,20}$/.test(s))return s;
+  return s;
+}
+function extractNipFromText(v){
+  const s=normalizeImportText(v);
+  const m=s.match(/\b\d{15,20}\b/);
+  return m?m[0]:'';
+}
+function cleanName(v){
+  let s=normalizeImportText(v);
+  s=s.replace(/^\s*(nama\s*[:.\-])\s*/i,'').trim();
+  s=s.replace(/\s*\/\s*\d{15,20}\s*$/,'').trim();
+  return s;
+}
+function getImportCell(row,idx){return idx>=0?normalizeImportText(row[idx]):'';}
+function importAttendanceRows(rows){
+  if(!Array.isArray(rows)||!rows.length)return{added:0,updated:0,attendance:0,rows:0,headerRow:0};
+  rows=rows.map(r=>Array.isArray(r)?r:[]);
+  const hd=detectImportHeader(rows), header=rows[hd.index]||[];
+  const ix={
+    nama:findCol(header,['nama_pegawai','nama_lengkap','nama_asn','nama','pegawai','name']),
+    nip:findCol(header,['nip_pppk','nipppk','nip_pns','nomor_induk_pegawai','nomor_induk','no_nip','nip']),
+    gol:findCol(header,['golongan_ruang','pangkat_golongan','gol_ruang','golongan','pangkat']),
+    jab:findCol(header,['jabatan_pegawai','uraian_jabatan','jabatan','position']),
+    unit:findCol(header,['unit_kerja','unit','opd','instansi','organisasi','bagian']),
+    kat:findCol(header,['kategori_tarif','kategori_sbm','kategori']),
+    tanggal:findCol(header,['tanggal_kehadiran','tanggal_hadir','hari_tanggal','tanggal','tgl','date']),
+    status:findCol(header,['status_kehadiran','kehadiran','presensi','absen','status','keterangan']),
+    masuk:findCol(header,['jam_masuk','waktu_masuk','check_in','jam_datang','masuk']),
+    pulang:findCol(header,['jam_pulang','waktu_pulang','check_out','pulang'])
+  };
+  // Bila file tidak memiliki baris judul yang mudah dikenali, tetap coba baris pertama.
+  if(hd.score===0){
+    const fallback=rows[0]||[];
+    Object.keys(ix).forEach(k=>{if(ix[k]<0)ix[k]=findCol(fallback,[k]);});
+  }
+  let added=0,updated=0,attendance=0,processed=0;
+  rows.slice(hd.index+1).forEach(row=>{
+    if(!row || !row.some(v=>normalizeImportText(v)!==''))return;
+    let nama=cleanName(getImportCell(row,ix.nama));
+    let nip=normalizeNip(getImportCell(row,ix.nip));
+    // Dukungan untuk format daftar hadir yang menaruh NIP di kolom yang sama dengan nama.
+    if(!nip){
+      const combined=row.map(normalizeImportText).join(' ');
+      nip=extractNipFromText(combined);
+      if(!nama){
+        const nameCell=row.find(v=>/[A-Za-zÀ-ÿ]/.test(normalizeImportText(v)) && !/^(hadir|izin|sakit|alpa|cuti|pulang|masuk)$/i.test(normalizeImportText(v)));
+        nama=cleanName(nameCell||'');
+      }
+    }
+    // Jika kolom nama terdeteksi tetapi berisi NIP saja, cari nama dari sel teks lain.
+    if(!nama || /^\d+$/.test(nama)){
+      const candidate=row.find(v=>{const x=normalizeImportText(v);return /[A-Za-zÀ-ÿ]/.test(x)&&!/^\d+$/.test(x)&&!/^(hadir|izin|sakit|alpa|cuti)$/i.test(x);});
+      if(candidate)nama=cleanName(candidate);
+    }
+    if(!nama && !nip)return;
+    let p=(nip&&DB.pegawai.find(x=>normalizeNip(x.nip)===nip))||(nama&&DB.pegawai.find(x=>normalizeImportText(x.nama).toLowerCase()===nama.toLowerCase()));
+    const d={
+      nama:nama||p?.nama||'',
+      nip:nip||p?.nip||'',
+      golongan:getImportCell(row,ix.gol)||p?.golongan||'',
+      jabatan:getImportCell(row,ix.jab)||p?.jabatan||'',
+      kategori:getImportCell(row,ix.kat)||p?.kategori||'Fungsional/Staf',
+      unit:getImportCell(row,ix.unit)||p?.unit||''
+    };
+    if(p){Object.assign(p,d);updated++;}else{p=Object.assign({id:uid('p')},d);DB.pegawai.push(p);added++;}
+    const tanggal=getImportCell(row,ix.tanggal), status=getImportCell(row,ix.status), masuk=getImportCell(row,ix.masuk), pulang=getImportCell(row,ix.pulang);
+    if(tanggal||status||masuk||pulang){
+      DB.kehadiran.push({id:uid('hadir'),pegawaiId:p.id,nama:p.nama,nip:p.nip,tanggal:tanggal||todayISO(),status:status||'Hadir',jamMasuk:masuk,jamPulang:pulang,sumber:'Impor file'});
+      attendance++;
+    }
+    processed++;
+  });
+  saveData(DB);
+  return{added,updated,attendance,rows:processed,headerRow:hd.index+1,headerScore:hd.score};
+}
+async function importPegawaiFile(file){
+  if(!file)return;
+  try{
+    const name=(file.name||'').toLowerCase();
+    let rows=[];
+    if(name.endsWith('.json')){
+      const j=JSON.parse(await file.text());
+      if(Array.isArray(j)&&j.length){
+        const keys=[...new Set(j.flatMap(x=>Object.keys(x||{})))];
+        rows=[keys,...j.map(x=>keys.map(k=>x?.[k]??''))];
+      }
+    }else{
+      const buf=await file.arrayBuffer();
+      const isText=/\.(csv|tsv|txt)$/i.test(name);
+      if(!isText){
+        if(!window.XLSX)throw new Error('Library Excel belum termuat.');
+        const wb=XLSX.read(buf,{type:'array',cellDates:true});
+        if(!wb.SheetNames.length)throw new Error('Workbook tidak memiliki sheet.');
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false,blankrows:false});
+      }else{
+        rows=parseDelimited(new TextDecoder('utf-8').decode(buf));
+      }
+    }
+    const r=importAttendanceRows(rows);
+    renderMasterBody();
+    if(!r.rows){toast(`File terbaca, tetapi tidak ada baris data pegawai yang dikenali. Header ditemukan pada baris ${r.headerRow||1}. Periksa kolom Nama/NIP.`);return;}
+    toast(`Impor: ${r.added} baru, ${r.updated} diperbarui, ${r.attendance} catatan hadir`);
+  }catch(e){console.error('Impor pegawai/daftar hadir:',e);toast(`Impor gagal: ${e.message||'format file tidak dikenali'}`);}
+}
 function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
 function simpleView(title,body){document.getElementById('modalBox').className='modal wide';document.getElementById('modalBox').innerHTML=`<div class="modal-head"><h3>${esc(title)}</h3><button class="close-x" onclick="closeModal()">✕</button></div>${body}<div style="text-align:right;margin-top:16px"><button class="btn btn-outline" onclick="closeModal()">Tutup</button></div>`;document.getElementById('modalBg').classList.add('open');}
 function viewSppd(id){const s=DB.sppd.find(x=>x.id===id);if(!s)return;simpleView('Lihat SPPD',`<b>Nomor:</b> ${esc(s.nomor||'-')}<br><b>Status:</b> ${esc(s.status||'-')}<br><b>Pegawai:</b> ${esc(pegawaiNames(s)||'-')}<br><b>Unit:</b> ${esc(unitName(s.unitId))}<br><b>Tujuan:</b> ${esc(s.kotaTujuan)}<br><b>Periode:</b> ${fmtDate(s.tanggalBerangkat)} s.d. ${fmtDate(s.tanggalKembali)}<br><b>Maksud:</b> ${esc(s.maksud)}<br><b>Total:</b> ${fmtRp(s.totalBiaya)}`);}
@@ -1367,8 +1507,6 @@ function editLpj(id){const l=DB.lpj.find(x=>x.id===id);if(!l)return;document.get
 function saveLpjEdit(id){const l=DB.lpj.find(x=>x.id===id);l.tanggalLapor=document.getElementById('le_t').value;l.ringkasan=document.getElementById('le_r').value;l.biayaRiil=Number(document.getElementById('le_b').value)||0;saveData(DB);closeModal();renderLpj();}
 function deleteLpj(id){if(!confirm('Hapus LPJ ini?'))return;DB.lpj=DB.lpj.filter(x=>x.id!==id);saveData(DB);renderLpj();toast('LPJ dihapus');}
 function normHead(v){return String(v??'').trim().toLowerCase().replace(/[\s\-\/]+/g,'_').replace(/[()]/g,'');}
-function importAttendanceRows(rows){if(!rows.length)return{added:0,updated:0,attendance:0};const h=rows[0].map(normHead);const ix={nama:h.findIndex(x=>['nama','nama_lengkap','nama_pegawai','pegawai','name'].includes(x)),nip:h.findIndex(x=>['nip','nomor_induk_pegawai','nip_baru'].includes(x)),gol:h.findIndex(x=>['golongan','golongan_ruang','pangkat_golongan'].includes(x)),jab:h.findIndex(x=>['jabatan','position'].includes(x)),unit:h.findIndex(x=>['unit','unit_kerja','opd','organisasi'].includes(x)),kat:h.findIndex(x=>['kategori','kategori_tarif','kategori_sbm'].includes(x)),tanggal:h.findIndex(x=>['tanggal','tgl','tanggal_hadir','tanggal_kehadiran','date'].includes(x)),status:h.findIndex(x=>['status','status_kehadiran','kehadiran','keterangan','presensi','absen'].includes(x)),masuk:h.findIndex(x=>['jam_masuk','waktu_masuk','check_in'].includes(x)),pulang:h.findIndex(x=>['jam_pulang','waktu_pulang','check_out'].includes(x))};const get=(r,k)=>ix[k]>=0?String(r[ix[k]]??'').trim():'';let added=0,updated=0,attendance=0;rows.slice(1).forEach(r=>{const nama=get(r,'nama'),nip=get(r,'nip');if(!nama&&!nip)return;let p=(nip&&DB.pegawai.find(x=>x.nip===nip))||(nama&&DB.pegawai.find(x=>x.nama.toLowerCase()===nama.toLowerCase()));const d={nama:nama||p?.nama||'',nip:nip||p?.nip||'',golongan:get(r,'gol')||p?.golongan||'',jabatan:get(r,'jab')||p?.jabatan||'',kategori:get(r,'kat')||p?.kategori||'Fungsional/Staf',unit:get(r,'unit')||p?.unit||DB.unitKerja[0]?.nama||''};if(p){Object.assign(p,d);updated++;}else{p=Object.assign({id:uid('p')},d);DB.pegawai.push(p);added++;}const tanggal=get(r,'tanggal'),status=get(r,'status'),masuk=get(r,'masuk'),pulang=get(r,'pulang');if(tanggal||status||masuk||pulang){DB.kehadiran.push({id:uid('hadir'),pegawaiId:p.id,nama:p.nama,nip:p.nip,tanggal:tanggal||todayISO(),status:status||'Hadir',jamMasuk:masuk,jamPulang:pulang,sumber:'Impor file'});attendance++;}});saveData(DB);return{added,updated,attendance};}
-async function importPegawaiFile(file){if(!file)return;try{const name=file.name.toLowerCase(),buf=await file.arrayBuffer();let rows=[];if(name.endsWith('.json')){const j=JSON.parse(await file.text());if(Array.isArray(j)&&j.length)rows=[Object.keys(j[0]),...j.map(x=>Object.values(x))];}else if(window.XLSX&&!name.match(/\.(csv|tsv|txt)$/)){const wb=XLSX.read(buf,{type:'array'}),ws=wb.Sheets[wb.SheetNames[0]];rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});}else rows=parseDelimited(new TextDecoder().decode(buf));const r=importAttendanceRows(rows);renderMasterBody();toast(`Impor: ${r.added} baru, ${r.updated} diperbarui, ${r.attendance} catatan hadir`);}catch(e){console.error(e);toast('File gagal diproses.');}}
 function openAttendanceView(){const a=DB.kehadiran||[];simpleView('Riwayat Daftar Hadir',a.length?`<div class="table-wrap"><table><thead><tr><th>Tanggal</th><th>Nama</th><th>NIP</th><th>Status</th><th>Masuk</th><th>Pulang</th><th>Aksi</th></tr></thead><tbody>${a.slice().reverse().map(x=>`<tr><td>${fmtDate(x.tanggal)}</td><td>${esc(x.nama)}</td><td>${esc(x.nip)}</td><td>${esc(x.status)}</td><td>${esc(x.jamMasuk||'-')}</td><td>${esc(x.jamPulang||'-')}</td><td><button class="icon-btn" title="Lihat" onclick="viewAttendance('${x.id}')">👁️</button><button class="icon-btn" title="Edit" onclick="editAttendance('${x.id}')">✏️</button><button class="icon-btn" title="Hapus" onclick="deleteAttendance('${x.id}')">🗑️</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Belum ada daftar hadir.</div>');}
 function viewAttendance(id){const x=DB.kehadiran.find(v=>v.id===id);if(x)simpleView('Lihat Kehadiran',`<b>Nama:</b> ${esc(x.nama)}<br><b>NIP:</b> ${esc(x.nip)}<br><b>Tanggal:</b> ${fmtDate(x.tanggal)}<br><b>Status:</b> ${esc(x.status)}<br><b>Masuk:</b> ${esc(x.jamMasuk||'-')}<br><b>Pulang:</b> ${esc(x.jamPulang||'-')}`);}
 function editAttendance(id){const x=DB.kehadiran.find(v=>v.id===id);if(!x)return;document.getElementById('modalBox').className='modal';document.getElementById('modalBox').innerHTML=`<div class="modal-head"><h3>Edit Kehadiran</h3><button class="close-x" onclick="closeModal()">✕</button></div><label>Tanggal</label><input type="date" id="ae_t" value="${x.tanggal}"><div style="height:8px"></div><label>Status</label><input id="ae_s" value="${esc(x.status)}"><div style="height:8px"></div><label>Jam Masuk</label><input id="ae_i" value="${esc(x.jamMasuk||'')}"><div style="height:8px"></div><label>Jam Pulang</label><input id="ae_o" value="${esc(x.jamPulang||'')}"><div style="text-align:right;margin-top:14px"><button class="btn btn-primary" onclick="saveAttendance('${id}')">Simpan</button></div>`;document.getElementById('modalBg').classList.add('open');}
